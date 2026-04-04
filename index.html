@@ -32,18 +32,25 @@
             <button onclick="run('thirdperson')">THIRD PERSON</button>
 
             <button onclick="run('firstperson')">FIRST PERSON</button>
+
+            <button onclick="adatok()">ADATOK</button>
         </div>
     </div>
 
     <script>
         function run(parancs) {
             if (typeof gmodinterface !== 'undefined') {
-                // Most már átküldjük a konkrét parancsot a Luának
                 gmodinterface.RunMyCommand(parancs);
             } else {
                 console.log("GMod parancs: " + parancs);
                 alert("Ez a gomb csak GMod-on belül fut le!");
             }
+        }
+
+        function adatok() {
+            run('say --- JATEKOS ADATOK ---');
+            run('status');
+            run('getpos');
         }
     </script>
 </body>
