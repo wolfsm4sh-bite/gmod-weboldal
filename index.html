@@ -283,7 +283,7 @@ var SEED_STATE = {
   drafts: { import: {}, export: {} },
   orders: [],
   messages: [
-    { id: 'MSG-0001', orderId: 'SYSTEM', type: 'system', title: 'Terminál indulás', body: 'A rendszer készen áll. A raktári személyzet visszajelzései ide fognak beérkezni.', createdAt: new Date().toISOString(), read: false }
+    { id: 'MSG-0001', orderId: 'SYSTEM', type: 'system', title: 'Terminál indulás', body: 'A rendszer készen áll. A raktári személyzet visszajelzései ide fognak beérkezni.', payload: null, createdAt: new Date().toISOString(), read: false }
   ],
   activity: [
     { text: 'Rendszer indulás kész.', ts: new Date().toISOString() }
@@ -430,6 +430,7 @@ function normalizeState(raw) {
       type: message.type || 'system',
       title: message.title || 'Üzenet',
       body: message.body || '',
+      payload: message.payload && typeof message.payload === 'object' ? deepClone(message.payload) : null,
       createdAt: message.createdAt || new Date().toISOString(),
       read: !!message.read
     });
@@ -539,6 +540,35 @@ function nextMessageId() {
   }
   return 'MSG-' + padNumber(max + 1, 4);
 }
+function cloneLines(lines) {
+  var out = {};
+  forEachOwn(lines || {}, function(res, qty) { out[res] = Math.floor(numberOrZero(qty)); });
+  return out;
+}
+function buildOrderMessagePayload(order) {
+  return {
+    orderId: order.id,
+    type: order.type,
+    wh: order.wh,
+    lines: cloneLines(order.lines || {})
+  };
+}
+function makeOrderMessageText(order) {
+  var parts = [];
+  forEachOwn(order.lines || {}, function(res, qty) {
+    parts.push(res + ': ' + Math.floor(numberOrZero(qty)));
+  });
+  return 'Raktári feladat létrehozva. Típus: ' + String(order.type).toUpperCase() + '. Tételek: ' + parts.join(', ');
+}
+function createOrderMessage(order) {
+  return addMessage({
+    orderId: order.id,
+    type: order.type,
+    title: 'Új ' + String(order.type).toUpperCase() + ' order',
+    body: makeOrderMessageText(order),
+    payload: buildOrderMessagePayload(order)
+  });
+}
 function addMessage(message) {
   var msg = {
     id: nextMessageId(),
@@ -546,6 +576,7 @@ function addMessage(message) {
     type: message.type || 'system',
     title: message.title || 'Üzenet',
     body: message.body || '',
+    payload: message.payload && typeof message.payload === 'object' ? deepClone(message.payload) : null,
     createdAt: message.createdAt || new Date().toISOString(),
     read: false
   };
@@ -632,6 +663,7 @@ function finalizeImportOrder() {
   state.drafts.import = {};
   shiftMarketPrices(order, 'create');
   addActivity(order.id + ' import order létrejött.');
+  createOrderMessage(order);
   saveState('Import order létrehozva.');
   render();
 }
@@ -660,6 +692,7 @@ function finalizeExportOrder() {
   state.drafts.export = {};
   shiftMarketPrices(order, 'create');
   addActivity(order.id + ' export order létrejött.');
+  createOrderMessage(order);
   saveState('Export order létrehozva.');
   render();
 }
@@ -937,13 +970,23 @@ function renderMessages() {
   var relatedOrder = null;
   for (i = 0; i < state.orders.length; i++) if (state.orders[i].id === message.orderId) relatedOrder = state.orders[i];
   var chip = message.type === 'export' ? 'export' : (message.type === 'import' ? 'import' : '');
+  var payload = message.payload && typeof message.payload === 'object' ? message.payload : null;
   html = '';
   html += '<div class="detail-box"><div class="detail-k">Üzenet ID</div><div class="detail-v mono">' + escapeHtml(message.id) + '</div></div>';
   html += '<div class="detail-box"><div class="detail-k">Order ID</div><div class="detail-v mono">' + escapeHtml(message.orderId || 'SYSTEM') + '</div></div>';
-  html += '<div class="detail-box"><div class="detail-k">Típus</div><div class="detail-v"><span class="chip ' + chip + '">' + escapeHtml(message.type) + '</span></div></div>';
-  html += '<div class="detail-box"><div class="detail-k">Idő</div><div class="detail-v">' + escapeHtml(new Date(message.createdAt).toLocaleString('hu-HU')) + '</div></div>';
+  html += '<div class="detail-box"><div class="detail-k">Típus</div><div class="detail-v"><span class="chip ' + chip + '">' + escapeHtml(payload && payload.type ? payload.type : message.type) + '</span></div></div>';
+  html += '<div class="detail-box"><div class="detail-k">Warehouse</div><div class="detail-v mono">' + escapeHtml(payload && payload.wh ? payload.wh : '-') + '</div></div>';
   html += '<div class="clearfix"></div>';
   html += '<div class="warning-box" style="background:#eef4ff; border-color:#8faedc; color:#183b70;">' + escapeHtml(message.body || '') + '</div>';
+  if (payload && payload.lines) {
+    html += '<div style="margin-top:12px;">';
+    html += '<table><thead><tr><th>Resource</th><th class="num">Qty</th></tr></thead><tbody>';
+    forEachOwn(payload.lines, function(res, qty) {
+      html += '<tr><td><strong>' + escapeHtml(res) + '</strong></td><td class="num">' + units(qty) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    html += '</div>';
+  }
   html += '<div style="text-align:right; margin-top:12px;">';
   if (relatedOrder) html += '<button class="primary" data-message-open-order="' + escapeHtml(relatedOrder.id) + '">Kapcsolódó order megnyitása</button> ';
   if (!message.read) html += '<button data-message-mark-read="' + escapeHtml(message.id) + '">Olvasottnak jelölés</button>';
@@ -1103,12 +1146,19 @@ window.TerminalApp = {
   completeOrder: function(orderId) { completeOrder(orderId); },
   addMessage: function(payload) { return addMessage(payload || {}); },
   markMessageRead: function(messageId) { markMessageRead(messageId, true); },
+  getWarehouseMessages: function() {
+    var out = [], i;
+    for (i = 0; i < state.messages.length; i++) {
+      if (state.messages[i].payload && state.messages[i].payload.lines) out.push(deepClone(state.messages[i]));
+    }
+    return out;
+  },
   notifyOrderReady: function(orderId, body) {
     var order = null, i;
     for (i = 0; i < state.orders.length; i++) if (state.orders[i].id === orderId) order = state.orders[i];
     var type = order ? order.type : 'system';
     var title = order ? (order.id + ' fizikai visszajelzés') : 'Fizikai visszajelzés';
-    return addMessage({ orderId: orderId || 'SYSTEM', type: type, title: title, body: body || 'A raktár jelentése szerint az order fizikai oldalon teljesült, kézi lezárásra vár.' });
+    return addMessage({ orderId: orderId || 'SYSTEM', type: type, title: title, body: body || 'A raktár jelentése szerint az order fizikai oldalon teljesült, kézi lezárásra vár.', payload: order ? buildOrderMessagePayload(order) : null });
   }
 };
 boot();
