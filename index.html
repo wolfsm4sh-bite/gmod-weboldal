@@ -391,30 +391,6 @@
     }
     .warehouse-card.active { outline: 2px solid #3d78ce; }
 
-
-    .message-layout {
-      display: grid;
-      grid-template-columns: 420px 1fr;
-      gap: 12px;
-      min-height: 0;
-      flex: 1;
-    }
-
-    .message-list { display: flex; flex-direction: column; gap: 8px; }
-    .message-item {
-      background: #fff;
-      border: 1px solid #a9afb6;
-      padding: 10px;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 12px;
-    }
-    .message-item.active { background: #dcecff; border-color: #4a78b7; }
-    .message-item.unread { border-left: 4px solid #1d64d8; padding-left: 7px; }
-    .message-headline { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
-    .message-flags { display: flex; gap: 6px; flex-wrap: wrap; }
     .statusbar {
       display: flex;
       gap: 12px;
@@ -433,7 +409,7 @@
 
     @media (max-width: 1120px) {
       .stats { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
-      .split, .split.orders, .message-layout { grid-template-columns: 1fr; }
+      .split, .split.orders { grid-template-columns: 1fr; }
       .desktop { min-height: auto; }
       .window { min-height: auto; }
       .draft-row { grid-template-columns: 1fr 80px 80px 90px 48px; }
@@ -505,7 +481,6 @@
         <div class="tab active" data-tab="merchant">Merchant</div>
         <div class="tab" data-tab="warehouse">Raktár</div>
         <div class="tab" data-tab="orders">Megrendelések</div>
-        <div class="tab" data-tab="messages">Üzenetek</div>
       </div>
 
       <section class="tab-panel active" data-panel="merchant">
@@ -637,29 +612,6 @@
         </div>
       </section>
 
-
-      <section class="tab-panel" data-panel="messages">
-        <div class="message-layout">
-          <div class="panel-box">
-            <div class="panel-head">
-              <div>Beérkező üzenetek</div>
-              <div class="muted" id="messagesHeadMeta"></div>
-            </div>
-            <div class="panel-body">
-              <div id="messagesList" class="message-list"></div>
-            </div>
-          </div>
-
-          <div class="panel-box">
-            <div class="panel-head">
-              <div>Üzenet részletek</div>
-              <div class="muted" id="selectedMessageMeta">Nincs kijelölve</div>
-            </div>
-            <div class="panel-body" id="messageDetailPane"></div>
-          </div>
-        </div>
-      </section>
-
       <div class="statusbar">
         <div class="status-left">
           <span id="statusText">Kész.</span>
@@ -685,7 +637,6 @@
       expectedRevenue: 0,
       nextOrderId: 1,
       selectedOrderId: null,
-      selectedMessageId: null,
       inventory: {
         WHMINE: { iron: 8200, coal: 4600, copper: 1250, stone: 9800 },
         WHFOOD: { ration: 1600, apple: 750, water: 1200 },
@@ -711,9 +662,6 @@
         export: {}
       },
       orders: [],
-      messages: [
-        { id: 'MSG-0001', orderId: 'SYSTEM', type: 'system', title: 'Terminál indulás', body: 'A rendszer készen áll. A raktári személyzet visszajelzései ide fognak beérkezni.', createdAt: new Date().toISOString(), read: false }
-      ],
       activity: [
         { text: 'Rendszer indulás kész.', ts: new Date().toISOString() }
       ]
@@ -751,10 +699,6 @@
       ordersList: document.getElementById('ordersList'),
       selectedOrderMeta: document.getElementById('selectedOrderMeta'),
       orderDetailPane: document.getElementById('orderDetailPane'),
-      messagesHeadMeta: document.getElementById('messagesHeadMeta'),
-      messagesList: document.getElementById('messagesList'),
-      selectedMessageMeta: document.getElementById('selectedMessageMeta'),
-      messageDetailPane: document.getElementById('messageDetailPane'),
       statusText: document.getElementById('statusText'),
       lastSavedText: document.getElementById('lastSavedText'),
       orderCounterText: document.getElementById('orderCounterText'),
@@ -787,14 +731,12 @@
       next.expectedRevenue = Number.isFinite(next.expectedRevenue) ? next.expectedRevenue : 0;
       next.nextOrderId = Number.isFinite(next.nextOrderId) ? next.nextOrderId : 1;
       next.selectedOrderId = next.selectedOrderId ?? null;
-      next.selectedMessageId = next.selectedMessageId ?? null;
       next.inventory = next.inventory && typeof next.inventory === 'object' ? next.inventory : {};
       next.market = next.market && typeof next.market === 'object' ? next.market : {};
       next.drafts = next.drafts && typeof next.drafts === 'object' ? next.drafts : { import: {}, export: {} };
       next.drafts.import = next.drafts.import && typeof next.drafts.import === 'object' ? next.drafts.import : {};
       next.drafts.export = next.drafts.export && typeof next.drafts.export === 'object' ? next.drafts.export : {};
       next.orders = Array.isArray(next.orders) ? next.orders : [];
-      next.messages = Array.isArray(next.messages) ? next.messages : [];
       next.activity = Array.isArray(next.activity) ? next.activity : [];
 
       for (const wh of Object.keys(next.inventory)) {
@@ -818,16 +760,6 @@
       next.orders = next.orders.map(order => ({
         ...order,
         linePrices: order.linePrices && typeof order.linePrices === 'object' ? order.linePrices : Object.fromEntries(Object.keys(order.lines || {}).map(res => [res, order.type === 'import' ? (next.market[res]?.currentBuy || next.market[res]?.baseBuy || 0) : (next.market[res]?.currentExport || next.market[res]?.baseExport || 0)]))
-      }));
-
-      next.messages = next.messages.map((message, idx) => ({
-        id: message.id || ('MSG-' + String(idx + 1).padStart(4, '0')),
-        orderId: message.orderId || 'SYSTEM',
-        type: message.type || 'system',
-        title: message.title || 'Üzenet',
-        body: message.body || '',
-        createdAt: message.createdAt || new Date().toISOString(),
-        read: Boolean(message.read)
       }));
 
       const whs = Object.keys(next.inventory);
@@ -927,46 +859,6 @@
 
     function totalResourceCount() {
       return getResourceIds().length;
-    }
-
-
-    function getUnreadMessageCount() {
-      return state.messages.filter(message => !message.read).length;
-    }
-
-    function nextMessageId() {
-      const nums = state.messages.map(message => Number(String(message.id || '').replace(/\D+/g, '')) || 0);
-      const next = (nums.length ? Math.max(...nums) : 0) + 1;
-      return 'MSG-' + String(next).padStart(4, '0');
-    }
-
-    function addMessage(message) {
-      const msg = {
-        id: nextMessageId(),
-        orderId: message.orderId || 'SYSTEM',
-        type: message.type || 'system',
-        title: message.title || 'Üzenet',
-        body: message.body || '',
-        createdAt: message.createdAt || new Date().toISOString(),
-        read: false
-      };
-      state.messages.unshift(msg);
-      state.messages = state.messages.slice(0, 200);
-      state.selectedMessageId = msg.id;
-      addActivity('Új üzenet érkezett: ' + msg.title);
-      saveState('Új üzenet érkezett.');
-      render();
-      return deepClone(msg);
-    }
-
-    function markMessageRead(messageId, shouldRender = true) {
-      const message = state.messages.find(item => item.id === messageId);
-      if (!message) return;
-      message.read = true;
-      if (shouldRender) {
-        saveState('Üzenet olvasottra állítva.');
-        render();
-      }
     }
 
     function addDraftLine(type, resource, qty) {
@@ -1177,7 +1069,7 @@
       els.statRevenue.textContent = money(state.expectedRevenue);
       els.statOrders.textContent = String(state.orders.length);
       els.statUnits.textContent = units(getActiveWarehouseFreeUnits());
-      els.orderCounterText.textContent = 'ORD: ' + state.orders.length + ' | MSG: ' + getUnreadMessageCount();
+      els.orderCounterText.textContent = 'ORD: ' + state.orders.length;
       els.resourceCounterText.textContent = 'RES: ' + totalResourceCount();
     }
 
@@ -1355,4 +1247,103 @@
       const actionClass = order.type === 'export' ? 'danger' : 'success';
       const warning = order.type === 'export'
         ? '<div class="warning-box">Ez végleges művelet. A hajó eltűnik és az order visszavonhatatlanul törlődik.</div>'
-        : '<div class="warning-box" style="background:#e2f2e4; border-color:#89b592; color:#1c5728;">Betároláskor az áru bekerül a WH készletéb... (14 KB maradt)
+        : '<div class="warning-box" style="background:#e2f2e4; border-color:#89b592; color:#1c5728;">Betároláskor az áru bekerül a WH készletébe, az import order pedig eltűnik az aktív listából.</div>';
+
+      els.orderDetailPane.innerHTML = `
+        <div class="detail-grid">
+          <div class="detail-box"><div class="k">Order ID</div><div class="v mono">${escapeHtml(order.id)}</div></div>
+          <div class="detail-box"><div class="k">Típus</div><div class="v"><span class="chip ${order.type}">${order.type}</span></div></div>
+          <div class="detail-box"><div class="k">Warehouse</div><div class="v mono">${escapeHtml(order.wh)}</div></div>
+          <div class="detail-box"><div class="k">Összérték</div><div class="v">${money(order.total)}</div></div>
+          <div class="detail-box"><div class="k">Létrehozva</div><div class="v">${escapeHtml(created)}</div></div>
+          <div class="detail-box"><div class="k">Tételek száma</div><div class="v">${Object.keys(order.lines).length}</div></div>
+        </div>
+        <div class="order-lines">
+          <table>
+            <thead>
+              <tr>
+                <th>Resource</th>
+                <th class="num">Qty</th>
+                <th class="num">Unit Price</th>
+                <th class="num">Line Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Object.entries(order.lines).map(([res, qty]) => {
+                const unit = Number(order.linePrices?.[res] || (order.type === 'import' ? state.market[res].currentBuy : state.market[res].currentExport));
+                return `
+                  <tr>
+                    <td><strong>${escapeHtml(state.market[res].label)}</strong><br><span class="muted mono">${escapeHtml(res)}</span></td>
+                    <td class="num">${units(qty)}</td>
+                    <td class="num">${money(unit)}</td>
+                    <td class="num">${money(unit * qty)}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        ${warning}
+        <div style="display:flex; justify-content:flex-end; margin-top:12px; gap:8px;">
+          <button class="${actionClass}" data-complete-order="${escapeHtml(order.id)}">${actionLabel}</button>
+        </div>
+      `;
+    }
+
+    function render() {
+      renderTabs();
+      renderWarehouseSelect();
+      renderStats();
+      renderMerchant();
+      renderDrafts();
+      renderActivity();
+      renderWarehouse();
+      renderOrders();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function bindEvents() {
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          renderTabs();
+        });
+      });
+
+      els.warehouseSelect.addEventListener('change', () => {
+        state.activeWarehouse = els.warehouseSelect.value;
+        saveState('Aktív WH: ' + state.activeWarehouse);
+        render();
+      });
+
+      els.resourceSearch.addEventListener('input', renderMerchant);
+
+      els.syncSeedBtn.addEventListener('click', () => {
+        const ok = confirm('Demo állapot visszaállítása?');
+        if (!ok) return;
+        state = normalizeState(SEED_STATE);
+        saveState('Demo állapot visszaállítva.');
+        render();
+      });
+
+      els.clearDraftsBtn.addEventListener('click', clearDrafts);
+      els.commitImportBtn.addEventListener('click', finalizeImportOrder);
+      els.commitExportBtn.addEventListener('click', finalizeExportOrder);
+
+      document.body.addEventListener('click', event => {
+        const btn = event.target.closest('button, .order-item, .warehouse-card');
+        if (!btn) return;
+
+        if (btn.dataset.action) {
+          const resource = btn.dataset.resource;
+          const input = btn.closest('tr')?.querySelector('input[data-qty-resource]');
+          const qty =... (5 KB maradt)
