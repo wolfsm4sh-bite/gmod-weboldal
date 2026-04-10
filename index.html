@@ -1,1349 +1,1117 @@
 <!DOCTYPE html>
 <html lang="hu">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Merchant Terminal</title>
-  <style>
-    :root {
-      --bg: #0f141b;
-      --desk: #1a2430;
-      --win95-face: #c3c7cb;
-      --win95-light: #ffffff;
-      --win95-mid: #8a8f97;
-      --win95-dark: #4f535a;
-      --win95-deep: #1b1d21;
-      --title-left: #08285f;
-      --title-right: #1f5cbf;
-      --text: #111;
-      --ok: #0f6d2f;
-      --warn: #8a5a00;
-      --danger: #7a0d0d;
-      --danger-bg: #ffe0e0;
-      --panel-bg: #dde2e7;
-      --screen-bg: #eef2f5;
-      --line: #9ba1a8;
-      --accent: #1d64d8;
-      --mono: Consolas, "Courier New", monospace;
-      --ui: Tahoma, Verdana, Arial, sans-serif;
-    }
-
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; background: radial-gradient(circle at top, #233142 0%, var(--bg) 50%, #0a0e13 100%); color: var(--text); font-family: var(--ui); min-height: 100%; }
-    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
-
-    .desktop {
-      width: min(1400px, 100%);
-      min-height: 860px;
-      background: linear-gradient(180deg, #29415d 0%, #1f2d3d 100%);
-      padding: 18px;
-      border: 2px solid #8090a0;
-      box-shadow: 0 0 0 2px #1b2632, 0 24px 54px rgba(0,0,0,.45);
-    }
-
-    .window {
-      background: var(--win95-face);
-      border-top: 2px solid var(--win95-light);
-      border-left: 2px solid var(--win95-light);
-      border-right: 2px solid var(--win95-deep);
-      border-bottom: 2px solid var(--win95-deep);
-      min-height: 820px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .titlebar {
-      background: linear-gradient(90deg, var(--title-left), var(--title-right));
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 8px;
-      font-weight: 700;
-      font-size: 13px;
-      letter-spacing: .2px;
-      user-select: none;
-    }
-
-    .titlebar .buttons { display: flex; gap: 4px; }
-    .titlebar .btn {
-      width: 18px;
-      height: 18px;
-      background: var(--win95-face);
-      color: #000;
-      display: grid;
-      place-items: center;
-      border-top: 1px solid var(--win95-light);
-      border-left: 1px solid var(--win95-light);
-      border-right: 1px solid var(--win95-deep);
-      border-bottom: 1px solid var(--win95-deep);
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      background: #d7dce0;
-      border-bottom: 1px solid var(--win95-dark);
-    }
-
-    .field {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-    }
-
-    .field label { font-weight: 700; }
-    select, input[type="number"], input[type="text"], textarea {
-      font-family: var(--ui);
-      font-size: 12px;
-      border-top: 1px solid var(--win95-deep);
-      border-left: 1px solid var(--win95-deep);
-      border-right: 1px solid var(--win95-light);
-      border-bottom: 1px solid var(--win95-light);
-      background: #fff;
-      padding: 5px 6px;
-      min-height: 28px;
-    }
-
-    .field input[type="text"] { min-width: 180px; }
-
-    button {
-      font-family: var(--ui);
-      font-size: 12px;
-      padding: 6px 10px;
-      min-height: 30px;
-      background: var(--win95-face);
-      border-top: 1px solid var(--win95-light);
-      border-left: 1px solid var(--win95-light);
-      border-right: 1px solid var(--win95-deep);
-      border-bottom: 1px solid var(--win95-deep);
-      cursor: pointer;
-      color: #000;
-    }
-
-    button:active {
-      border-top: 1px solid var(--win95-deep);
-      border-left: 1px solid var(--win95-deep);
-      border-right: 1px solid var(--win95-light);
-      border-bottom: 1px solid var(--win95-light);
-    }
-
-    button.primary { background: #dbe8ff; }
-    button.success { background: #dff0e0; }
-    button.danger { background: #ffd9d9; }
-    button.mini { padding: 2px 7px; min-height: 24px; }
-    button:disabled { color: #666; background: #d5d8db; cursor: not-allowed; }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(150px, 1fr));
-      gap: 10px;
-      padding: 10px;
-      background: #d0d6dc;
-      border-bottom: 1px solid var(--win95-dark);
-    }
-
-    .stat {
-      background: var(--screen-bg);
-      border-top: 1px solid var(--win95-deep);
-      border-left: 1px solid var(--win95-deep);
-      border-right: 1px solid var(--win95-light);
-      border-bottom: 1px solid var(--win95-light);
-      padding: 8px;
-    }
-
-    .stat .label { font-size: 11px; color: #334; text-transform: uppercase; letter-spacing: .4px; }
-    .stat .value { font-size: 18px; font-weight: 700; margin-top: 4px; }
-
-    .tabs {
-      display: flex;
-      gap: 4px;
-      padding: 10px 10px 0;
-      background: var(--win95-face);
-    }
-
-    .tab {
-      padding: 8px 12px;
-      border-top: 1px solid var(--win95-light);
-      border-left: 1px solid var(--win95-light);
-      border-right: 1px solid var(--win95-deep);
-      border-bottom: none;
-      background: #d9dde2;
-      cursor: pointer;
-      user-select: none;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .tab.active {
-      background: var(--screen-bg);
-      position: relative;
-      top: 1px;
-    }
-
-    .tab-panel {
-      display: none;
-      flex: 1;
-      background: var(--screen-bg);
-      border-top: 1px solid var(--win95-light);
-      border-left: 1px solid var(--win95-light);
-      border-right: 1px solid var(--win95-deep);
-      border-bottom: 1px solid var(--win95-deep);
-      margin: 0 10px 10px;
-      padding: 12px;
-      min-height: 0;
-    }
-
-    .tab-panel.active { display: flex; flex-direction: column; gap: 12px; }
-
-    .split {
-      display: grid;
-      grid-template-columns: 1.65fr 1fr;
-      gap: 12px;
-      min-height: 0;
-      flex: 1;
-    }
-
-    .split.orders { grid-template-columns: 360px 1fr; }
-
-    .panel-box {
-      background: var(--panel-bg);
-      border-top: 1px solid var(--win95-light);
-      border-left: 1px solid var(--win95-light);
-      border-right: 1px solid var(--win95-deep);
-      border-bottom: 1px solid var(--win95-deep);
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-    }
-
-    .panel-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      border-bottom: 1px solid var(--line);
-      background: #d8dce0;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .panel-body {
-      padding: 10px;
-      overflow: auto;
-      min-height: 0;
-      flex: 1;
-    }
-
-    table { width: 100%; border-collapse: collapse; background: #fff; }
-    th, td {
-      border: 1px solid #a5abb2;
-      padding: 6px 8px;
-      font-size: 12px;
-      text-align: left;
-      vertical-align: middle;
-    }
-    th { background: #d5d9de; position: sticky; top: 0; z-index: 2; }
-    td.num, th.num { text-align: right; }
-    tr.selected { background: #d9ecff; }
-    tr:hover td { background: #f5f9ff; }
-
-    .row-actions { display: flex; gap: 6px; align-items: center; justify-content: flex-end; }
-    .qty-cell { display: flex; justify-content: flex-end; }
-    .qty-cell input { width: 90px; }
-
-    .draft-stack { display: flex; flex-direction: column; gap: 12px; }
-    .draft-card {
-      background: #fff;
-      border: 1px solid #aab0b7;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-    }
-    .draft-card .head {
-      padding: 8px 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      background: #d7dce0;
-      border-bottom: 1px solid #aab0b7;
-      font-weight: 700;
-      font-size: 12px;
-    }
-
-    .draft-list { display: flex; flex-direction: column; }
-    .draft-row {
-      display: grid;
-      grid-template-columns: 1fr 86px 88px 110px 56px;
-      gap: 8px;
-      align-items: center;
-      padding: 8px 10px;
-      border-bottom: 1px solid #e5e7ea;
-      font-size: 12px;
-    }
-    .draft-row:last-child { border-bottom: none; }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 70px;
-      padding: 3px 8px;
-      font-size: 11px;
-      font-weight: 700;
-      border: 1px solid #66707a;
-      background: #edf0f3;
-      text-transform: uppercase;
-    }
-    .chip.import { background: #d8ebff; border-color: #5c89c7; }
-    .chip.export { background: #ffe3c5; border-color: #b8792a; }
-
-    .muted { color: #55606d; }
-    .ok { color: var(--ok); font-weight: 700; }
-    .warn { color: var(--warn); font-weight: 700; }
-    .danger-text { color: var(--danger); font-weight: 700; }
-
-    .empty {
-      color: #506070;
-      text-align: center;
-      padding: 24px 12px;
-      font-size: 12px;
-    }
-
-    .order-list { display: flex; flex-direction: column; gap: 8px; }
-    .order-item {
-      background: #fff;
-      border: 1px solid #a9afb6;
-      padding: 10px;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 12px;
-    }
-    .order-item.active { background: #dcecff; border-color: #4a78b7; }
-    .order-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-    .order-meta { display: flex; gap: 6px; flex-wrap: wrap; }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(180px, 1fr));
-      gap: 10px;
-    }
-    .detail-box {
-      background: #fff;
-      border: 1px solid #aab0b7;
-      padding: 8px 10px;
-      font-size: 12px;
-    }
-    .detail-box .k { font-size: 11px; text-transform: uppercase; color: #4a5663; }
-    .detail-box .v { margin-top: 4px; font-weight: 700; }
-
-    .order-lines table { margin-top: 10px; }
-
-    .warning-box {
-      margin-top: 12px;
-      padding: 10px;
-      background: var(--danger-bg);
-      border: 1px solid #c98383;
-      color: #5c0d0d;
-      font-size: 12px;
-      line-height: 1.4;
-    }
-
-    .json-box {
-      background: #10171f;
-      color: #d8f0ff;
-      font-family: var(--mono);
-      font-size: 12px;
-      line-height: 1.45;
-      padding: 12px;
-      min-height: 280px;
-      white-space: pre-wrap;
-      overflow: auto;
-      border-top: 1px solid var(--win95-deep);
-      border-left: 1px solid var(--win95-deep);
-      border-right: 1px solid var(--win95-light);
-      border-bottom: 1px solid var(--win95-light);
-    }
-
-    .warehouse-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 10px;
-    }
-    .warehouse-card {
-      background: #fff;
-      border: 1px solid #aab0b7;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 12px;
-    }
-    .warehouse-card.active { outline: 2px solid #3d78ce; }
-
-    .statusbar {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 10px;
-      background: #d4d8dd;
-      border-top: 1px solid var(--line);
-      font-size: 11px;
-    }
-
-    .status-left, .status-right { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-
-    .mono { font-family: var(--mono); }
-
-    @media (max-width: 1120px) {
-      .stats { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
-      .split, .split.orders { grid-template-columns: 1fr; }
-      .desktop { min-height: auto; }
-      .window { min-height: auto; }
-      .draft-row { grid-template-columns: 1fr 80px 80px 90px 48px; }
-    }
-
-    @media (max-width: 760px) {
-      body { padding: 10px; }
-      .desktop { padding: 8px; }
-      .stats { grid-template-columns: 1fr; }
-      .toolbar { flex-direction: column; align-items: stretch; }
-      .field { flex-wrap: wrap; }
-      .draft-row { grid-template-columns: 1fr; }
-      .detail-grid { grid-template-columns: 1fr; }
-      table, th, td { font-size: 11px; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Merchant Terminal</title>
+<style>
+html, body { margin:0; padding:0; font-family:Tahoma, Verdana, Arial, sans-serif; background:#16202b; color:#111; }
+body { padding:18px; }
+.desktop { max-width:1320px; margin:0 auto; background:#27405d; border:2px solid #8090a0; padding:14px; }
+.window { background:#c3c7cb; border-top:2px solid #fff; border-left:2px solid #fff; border-right:2px solid #1b1d21; border-bottom:2px solid #1b1d21; }
+.titlebar { background:#0a2e72; color:#fff; font-weight:bold; font-size:13px; line-height:18px; padding:6px 8px; position:relative; }
+.titlebuttons { position:absolute; right:6px; top:5px; }
+.titlebtn { display:inline-block; width:16px; height:16px; line-height:14px; text-align:center; margin-left:4px; background:#c3c7cb; color:#000; border-top:1px solid #fff; border-left:1px solid #fff; border-right:1px solid #1b1d21; border-bottom:1px solid #1b1d21; font-size:11px; }
+.toolbar { padding:10px; background:#d7dce0; border-bottom:1px solid #8a8f97; }
+.field { display:inline-block; margin-right:10px; margin-bottom:6px; font-size:12px; vertical-align:middle; }
+.field label { font-weight:bold; margin-right:6px; }
+select, input[type=text], input[type=number], textarea { font-family:Tahoma, Verdana, Arial, sans-serif; font-size:12px; border-top:1px solid #1b1d21; border-left:1px solid #1b1d21; border-right:1px solid #fff; border-bottom:1px solid #fff; background:#fff; padding:4px 6px; }
+input[type=text] { width:190px; }
+input[type=number] { width:72px; }
+button { font-family:Tahoma, Verdana, Arial, sans-serif; font-size:12px; padding:5px 9px; background:#c3c7cb; border-top:1px solid #fff; border-left:1px solid #fff; border-right:1px solid #1b1d21; border-bottom:1px solid #1b1d21; cursor:pointer; }
+button.primary { background:#dbe8ff; }
+button.success { background:#dff0e0; }
+button.danger { background:#ffd9d9; }
+button.mini { padding:2px 6px; }
+button:disabled { color:#666; background:#d5d8db; cursor:default; }
+.stats { padding:10px; background:#d0d6dc; border-bottom:1px solid #8a8f97; overflow:hidden; }
+.stat { float:left; width:19%; margin-right:1%; background:#eef2f5; border-top:1px solid #1b1d21; border-left:1px solid #1b1d21; border-right:1px solid #fff; border-bottom:1px solid #fff; padding:8px; min-height:58px; }
+.stat.last { margin-right:0; }
+.statlabel { font-size:11px; color:#334; text-transform:uppercase; }
+.statvalue { font-size:18px; font-weight:bold; margin-top:4px; }
+.tabs { padding:10px 10px 0 10px; }
+.tab { display:inline-block; padding:8px 12px; font-size:12px; font-weight:bold; background:#d9dde2; border-top:1px solid #fff; border-left:1px solid #fff; border-right:1px solid #1b1d21; cursor:pointer; margin-right:4px; }
+.tab.active { background:#eef2f5; position:relative; top:1px; }
+.tab-panel { display:none; margin:0 10px 10px 10px; background:#eef2f5; border-top:1px solid #fff; border-left:1px solid #fff; border-right:1px solid #1b1d21; border-bottom:1px solid #1b1d21; padding:12px; overflow:hidden; }
+.tab-panel.active { display:block; }
+.col-left { float:left; width:64%; }
+.col-right { float:right; width:35%; }
+.orders-left { float:left; width:31%; }
+.orders-right { float:right; width:68%; }
+.messages-left { float:left; width:34%; }
+.messages-right { float:right; width:65%; }
+.panel-box { background:#dde2e7; border-top:1px solid #fff; border-left:1px solid #fff; border-right:1px solid #1b1d21; border-bottom:1px solid #1b1d21; margin-bottom:12px; }
+.panel-head { padding:8px 10px; background:#d8dce0; border-bottom:1px solid #9ba1a8; font-size:12px; font-weight:bold; overflow:hidden; }
+.panel-head .right { float:right; color:#55606d; font-weight:normal; }
+.panel-body { padding:10px; overflow:auto; }
+table { width:100%; border-collapse:collapse; background:#fff; }
+th, td { border:1px solid #a5abb2; padding:6px 8px; font-size:12px; vertical-align:middle; }
+th { background:#d5d9de; text-align:left; }
+.num { text-align:right; }
+.muted { color:#55606d; }
+.mono { font-family:Consolas, "Courier New", monospace; }
+.empty { color:#506070; text-align:center; padding:22px 12px; font-size:12px; }
+.row-actions { text-align:right; white-space:nowrap; }
+.row-actions button { margin-left:4px; }
+.draft-card { background:#fff; border:1px solid #aab0b7; margin-bottom:12px; }
+.draft-head { padding:8px 10px; background:#d7dce0; border-bottom:1px solid #aab0b7; font-size:12px; font-weight:bold; overflow:hidden; }
+.draft-head .right { float:right; color:#55606d; font-weight:normal; }
+.chip { display:inline-block; min-width:58px; padding:3px 8px; text-align:center; font-size:11px; font-weight:bold; border:1px solid #66707a; background:#edf0f3; text-transform:uppercase; margin-right:6px; }
+.chip.import { background:#d8ebff; border-color:#5c89c7; }
+.chip.export { background:#ffe3c5; border-color:#b8792a; }
+.draft-row { padding:8px 10px; border-bottom:1px solid #e5e7ea; font-size:12px; overflow:hidden; }
+.draft-row:last-child { border-bottom:none; }
+.draft-row .c1 { float:left; width:42%; }
+.draft-row .c2 { float:left; width:12%; text-align:right; }
+.draft-row .c3 { float:left; width:14%; text-align:right; }
+.draft-row .c4 { float:left; width:18%; text-align:right; }
+.draft-row .c5 { float:right; width:12%; text-align:right; }
+.activity-row { padding:8px 10px; border-bottom:1px solid #e5e7ea; font-size:12px; }
+.activity-row .time { display:inline-block; width:74px; color:#55606d; font-family:Consolas, "Courier New", monospace; }
+.warehouse-card { display:inline-block; width:23%; min-width:210px; vertical-align:top; margin:0 1% 10px 0; padding:10px; background:#fff; border:1px solid #aab0b7; font-size:12px; cursor:pointer; }
+.warehouse-card.active { outline:2px solid #3d78ce; }
+.order-item, .message-item { background:#fff; border:1px solid #a9afb6; padding:10px; margin-bottom:8px; cursor:pointer; font-size:12px; }
+.order-item.active, .message-item.active { background:#dcecff; border-color:#4a78b7; }
+.message-item.unread { border-left:4px solid #1d64d8; padding-left:7px; }
+.warning-box { margin-top:12px; padding:10px; background:#ffe0e0; border:1px solid #c98383; color:#5c0d0d; font-size:12px; line-height:1.4; }
+.success-box { margin-top:12px; padding:10px; background:#e2f2e4; border:1px solid #89b592; color:#1c5728; font-size:12px; line-height:1.4; }
+.detail-box { display:inline-block; width:48%; vertical-align:top; background:#fff; border:1px solid #aab0b7; padding:8px 10px; font-size:12px; margin:0 1% 10px 0; }
+.detail-k { font-size:11px; color:#4a5663; text-transform:uppercase; }
+.detail-v { margin-top:4px; font-weight:bold; }
+.json-box { background:#10171f; color:#d8f0ff; font-family:Consolas, "Courier New", monospace; font-size:12px; line-height:1.45; padding:12px; min-height:280px; white-space:pre-wrap; overflow:auto; border-top:1px solid #1b1d21; border-left:1px solid #1b1d21; border-right:1px solid #fff; border-bottom:1px solid #fff; }
+.statusbar { clear:both; overflow:hidden; padding:6px 10px; background:#d4d8dd; border-top:1px solid #9ba1a8; font-size:11px; }
+.status-left { float:left; }
+.status-right { float:right; }
+.status-right span { margin-left:10px; }
+.clearfix { clear:both; }
+@media screen and (max-width: 1100px) {
+  .col-left, .col-right, .orders-left, .orders-right, .messages-left, .messages-right { float:none; width:auto; }
+  .stat { width:48%; margin-right:2%; margin-bottom:8px; }
+  .warehouse-card { width:48%; }
+}
+@media screen and (max-width: 760px) {
+  body { padding:8px; }
+  .desktop { padding:8px; }
+  .stat, .warehouse-card, .detail-box { width:auto; display:block; margin-right:0; }
+  .field { display:block; }
+  .draft-row .c1, .draft-row .c2, .draft-row .c3, .draft-row .c4, .draft-row .c5 { float:none; width:auto; text-align:left; margin-bottom:4px; }
+}
+</style>
 </head>
 <body>
-  <div class="desktop">
-    <div class="window">
-      <div class="titlebar">
-        <div id="titleText">Southside Merchant Terminal</div>
-        <div class="buttons">
-          <div class="btn">_</div>
-          <div class="btn">□</div>
-          <div class="btn">X</div>
-        </div>
-      </div>
-
-      <div class="toolbar">
-        <div class="field">
-          <label for="warehouseSelect">Aktív WH</label>
-          <select id="warehouseSelect"></select>
-        </div>
-        <div class="field">
-          <label for="resourceSearch">Szűrés</label>
-          <input id="resourceSearch" type="text" placeholder="resource név..." />
-        </div>
-        <div class="field">
-          <button id="syncSeedBtn">Demo állapot visszaállítás</button>
-          <button id="clearDraftsBtn">Tervezetek ürítése</button>
-        </div>
-      </div>
-
-      <div class="stats">
-        <div class="stat">
-          <div class="label">Szabad pénz</div>
-          <div class="value" id="statCash">$0</div>
-        </div>
-        <div class="stat">
-          <div class="label">Lekötött pénz</div>
-          <div class="value" id="statLocked">$0</div>
-        </div>
-        <div class="stat">
-          <div class="label">Várható export bevétel</div>
-          <div class="value" id="statRevenue">$0</div>
-        </div>
-        <div class="stat">
-          <div class="label">Nyitott orderek</div>
-          <div class="value" id="statOrders">0</div>
-        </div>
-        <div class="stat">
-          <div class="label">Aktív WH szabad unit</div>
-          <div class="value" id="statUnits">0</div>
-        </div>
-      </div>
-
-      <div class="tabs">
-        <div class="tab active" data-tab="merchant">Merchant</div>
-        <div class="tab" data-tab="warehouse">Raktár</div>
-        <div class="tab" data-tab="orders">Megrendelések</div>
-      </div>
-
-      <section class="tab-panel active" data-panel="merchant">
-        <div class="split">
-          <div class="panel-box">
-            <div class="panel-head">
-              <div>Piaci lista</div>
-              <div class="muted" id="merchantHeadMeta"></div>
-            </div>
-            <div class="panel-body">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Resource</th>
-                    <th class="num">Buy</th>
-                    <th class="num">Export</th>
-                    <th class="num">Stock</th>
-                    <th class="num">Reserved</th>
-                    <th class="num">Free</th>
-                    <th class="num">Qty</th>
-                    <th class="num">Művelet</th>
-                  </tr>
-                </thead>
-                <tbody id="marketTableBody"></tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="panel-box">
-            <div class="panel-head">
-              <div>Aktuális tervezetek</div>
-              <div class="muted">Import + Export</div>
-            </div>
-            <div class="panel-body">
-              <div class="draft-stack">
-                <div class="draft-card">
-                  <div class="head">
-                    <span><span class="chip import">Import</span> Beszerzési tervezet</span>
-                    <span id="importDraftSummary" class="muted">0 tétel</span>
-                  </div>
-                  <div id="importDraftList" class="draft-list"></div>
-                  <div class="panel-body" style="padding-top:0;">
-                    <div class="field" style="justify-content:space-between;">
-                      <div><strong>Összköltség:</strong> <span id="importDraftTotal">$0</span></div>
-                      <button id="commitImportBtn" class="primary">Import order létrehozása</button>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="draft-card">
-                  <div class="head">
-                    <span><span class="chip export">Export</span> Kimenő tervezet</span>
-                    <span id="exportDraftSummary" class="muted">0 tétel</span>
-                  </div>
-                  <div id="exportDraftList" class="draft-list"></div>
-                  <div class="panel-body" style="padding-top:0;">
-                    <div class="field" style="justify-content:space-between;">
-                      <div><strong>Várható bevétel:</strong> <span id="exportDraftTotal">$0</span></div>
-                      <button id="commitExportBtn" class="success">Export order létrehozása</button>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="draft-card">
-                  <div class="head">Legutóbbi események</div>
-                  <div id="activityList" class="draft-list"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="tab-panel" data-panel="warehouse">
-        <div class="split">
-          <div class="panel-box">
-            <div class="panel-head">
-              <div>Raktárnézet</div>
-              <div class="muted" id="warehouseHeadMeta"></div>
-            </div>
-            <div class="panel-body">
-              <div class="warehouse-grid" id="warehouseCards"></div>
-              <div style="height:12px"></div>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Resource</th>
-                    <th class="num">Stock</th>
-                    <th class="num">Reserved</th>
-                    <th class="num">Free</th>
-                  </tr>
-                </thead>
-                <tbody id="warehouseTableBody"></tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="panel-box">
-            <div class="panel-head">
-              <div>Aktuális inventory JSON</div>
-              <div class="muted mono">state.inventory</div>
-            </div>
-            <div class="panel-body">
-              <div class="json-box" id="jsonPreview"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="tab-panel" data-panel="orders">
-        <div class="split orders">
-          <div class="panel-box">
-            <div class="panel-head">
-              <div>Aktív orderek</div>
-              <div class="muted" id="ordersHeadMeta"></div>
-            </div>
-            <div class="panel-body">
-              <div id="ordersList" class="order-list"></div>
-            </div>
-          </div>
-
-          <div class="panel-box">
-            <div class="panel-head">
-              <div>Order részletek</div>
-              <div class="muted" id="selectedOrderMeta">Nincs kijelölve</div>
-            </div>
-            <div class="panel-body" id="orderDetailPane"></div>
-          </div>
-        </div>
-      </section>
-
-      <div class="statusbar">
-        <div class="status-left">
-          <span id="statusText">Kész.</span>
-          <span class="mono" id="lastSavedText">last save: --</span>
-        </div>
-        <div class="status-right">
-          <span class="mono" id="orderCounterText">ORD: 0</span>
-          <span class="mono" id="resourceCounterText">RES: 0</span>
-        </div>
+<div class="desktop">
+  <div class="window">
+    <div class="titlebar">
+      <span id="titleText">Southside Merchant Terminal</span>
+      <div class="titlebuttons">
+        <span class="titlebtn">_</span><span class="titlebtn">□</span><span class="titlebtn">X</span>
       </div>
     </div>
-  </div>
 
-  <script>
-    const STORAGE_KEY = 'southside-merchant-terminal-v1';
+    <div class="toolbar">
+      <div class="field"><label for="warehouseSelect">Aktív WH</label><select id="warehouseSelect"></select></div>
+      <div class="field"><label for="resourceSearch">Szűrés</label><input id="resourceSearch" type="text" placeholder="resource név..."></div>
+      <div class="field"><button id="syncSeedBtn">Demo állapot visszaállítás</button> <button id="clearDraftsBtn">Tervezetek ürítése</button></div>
+    </div>
 
-    const SEED_STATE = {
-      brokerName: 'Southside Merchant Terminal',
-      currency: '$',
-      activeWarehouse: 'WHMINE',
-      cash: 260000,
-      lockedCash: 0,
-      expectedRevenue: 0,
-      nextOrderId: 1,
-      selectedOrderId: null,
-      inventory: {
-        WHMINE: { iron: 8200, coal: 4600, copper: 1250, stone: 9800 },
-        WHFOOD: { ration: 1600, apple: 750, water: 1200 },
-        WHPARTS: { parts: 420, bearings: 180, chemicals: 300, oil: 0 }
-      },
-      market: {
-        iron: { label: 'Iron', baseBuy: 19, baseExport: 24, currentBuy: 19, currentExport: 24 },
-        coal: { label: 'Coal', baseBuy: 11, baseExport: 15, currentBuy: 11, currentExport: 15 },
-        copper: { label: 'Copper', baseBuy: 27, baseExport: 34, currentBuy: 27, currentExport: 34 },
-        stone: { label: 'Stone', baseBuy: 6, baseExport: 8, currentBuy: 6, currentExport: 8 },
-        ration: { label: 'Ration', baseBuy: 14, baseExport: 19, currentBuy: 14, currentExport: 19 },
-        apple: { label: 'Apple', baseBuy: 12, baseExport: 16, currentBuy: 12, currentExport: 16 },
-        water: { label: 'Water', baseBuy: 5, baseExport: 8, currentBuy: 5, currentExport: 8 },
-        parts: { label: 'Parts', baseBuy: 39, baseExport: 48, currentBuy: 39, currentExport: 48 },
-        bearings: { label: 'Bearings', baseBuy: 33, baseExport: 41, currentBuy: 33, currentExport: 41 },
-        chemicals: { label: 'Chemicals', baseBuy: 28, baseExport: 36, currentBuy: 28, currentExport: 36 },
-        oil: { label: 'Oil', baseBuy: 44, baseExport: 53, currentBuy: 44, currentExport: 53 },
-        wood: { label: 'Wood', baseBuy: 16, baseExport: 22, currentBuy: 16, currentExport: 22 },
-        food: { label: 'Food', baseBuy: 18, baseExport: 24, currentBuy: 18, currentExport: 24 }
-      },
-      drafts: {
-        import: {},
-        export: {}
-      },
-      orders: [],
-      activity: [
-        { text: 'Rendszer indulás kész.', ts: new Date().toISOString() }
-      ]
-    };
+    <div class="stats">
+      <div class="stat"><div class="statlabel">Szabad pénz</div><div class="statvalue" id="statCash">$0</div></div>
+      <div class="stat"><div class="statlabel">Lekötött pénz</div><div class="statvalue" id="statLocked">$0</div></div>
+      <div class="stat"><div class="statlabel">Várható export bevétel</div><div class="statvalue" id="statRevenue">$0</div></div>
+      <div class="stat"><div class="statlabel">Nyitott orderek</div><div class="statvalue" id="statOrders">0</div></div>
+      <div class="stat last"><div class="statlabel">Aktív WH szabad unit</div><div class="statvalue" id="statUnits">0</div></div>
+      <div class="clearfix"></div>
+    </div>
 
-    let state = null;
+    <div class="tabs">
+      <div class="tab active" data-tab="merchant">Merchant</div>
+      <div class="tab" data-tab="warehouse">Raktár</div>
+      <div class="tab" data-tab="orders">Megrendelések</div>
+      <div class="tab" data-tab="messages">Üzenetek</div>
+    </div>
 
-    const els = {
-      titleText: document.getElementById('titleText'),
-      warehouseSelect: document.getElementById('warehouseSelect'),
-      resourceSearch: document.getElementById('resourceSearch'),
-      syncSeedBtn: document.getElementById('syncSeedBtn'),
-      clearDraftsBtn: document.getElementById('clearDraftsBtn'),
-      statCash: document.getElementById('statCash'),
-      statLocked: document.getElementById('statLocked'),
-      statRevenue: document.getElementById('statRevenue'),
-      statOrders: document.getElementById('statOrders'),
-      statUnits: document.getElementById('statUnits'),
-      marketTableBody: document.getElementById('marketTableBody'),
-      merchantHeadMeta: document.getElementById('merchantHeadMeta'),
-      importDraftList: document.getElementById('importDraftList'),
-      exportDraftList: document.getElementById('exportDraftList'),
-      importDraftSummary: document.getElementById('importDraftSummary'),
-      exportDraftSummary: document.getElementById('exportDraftSummary'),
-      importDraftTotal: document.getElementById('importDraftTotal'),
-      exportDraftTotal: document.getElementById('exportDraftTotal'),
-      commitImportBtn: document.getElementById('commitImportBtn'),
-      commitExportBtn: document.getElementById('commitExportBtn'),
-      activityList: document.getElementById('activityList'),
-      warehouseHeadMeta: document.getElementById('warehouseHeadMeta'),
-      warehouseCards: document.getElementById('warehouseCards'),
-      warehouseTableBody: document.getElementById('warehouseTableBody'),
-      jsonPreview: document.getElementById('jsonPreview'),
-      ordersHeadMeta: document.getElementById('ordersHeadMeta'),
-      ordersList: document.getElementById('ordersList'),
-      selectedOrderMeta: document.getElementById('selectedOrderMeta'),
-      orderDetailPane: document.getElementById('orderDetailPane'),
-      statusText: document.getElementById('statusText'),
-      lastSavedText: document.getElementById('lastSavedText'),
-      orderCounterText: document.getElementById('orderCounterText'),
-      resourceCounterText: document.getElementById('resourceCounterText')
-    };
-
-    function deepClone(obj) {
-      return JSON.parse(JSON.stringify(obj));
-    }
-
-    function defaultMarketEntry(id) {
-      const pretty = id.replace(/[_-]+/g, ' ').replace(/\b\w/g, s => s.toUpperCase());
-      const hash = [...id].reduce((acc, c) => acc + c.charCodeAt(0), 0);
-      const buy = 10 + (hash % 25);
-      return {
-        label: pretty,
-        baseBuy: buy,
-        baseExport: buy + 6,
-        currentBuy: buy,
-        currentExport: buy + 6
-      };
-    }
-
-    function normalizeState(raw) {
-      const next = deepClone(raw || SEED_STATE);
-      next.brokerName = next.brokerName || 'Southside Merchant Terminal';
-      next.currency = next.currency || '$';
-      next.cash = Number.isFinite(next.cash) ? next.cash : 0;
-      next.lockedCash = Number.isFinite(next.lockedCash) ? next.lockedCash : 0;
-      next.expectedRevenue = Number.isFinite(next.expectedRevenue) ? next.expectedRevenue : 0;
-      next.nextOrderId = Number.isFinite(next.nextOrderId) ? next.nextOrderId : 1;
-      next.selectedOrderId = next.selectedOrderId ?? null;
-      next.inventory = next.inventory && typeof next.inventory === 'object' ? next.inventory : {};
-      next.market = next.market && typeof next.market === 'object' ? next.market : {};
-      next.drafts = next.drafts && typeof next.drafts === 'object' ? next.drafts : { import: {}, export: {} };
-      next.drafts.import = next.drafts.import && typeof next.drafts.import === 'object' ? next.drafts.import : {};
-      next.drafts.export = next.drafts.export && typeof next.drafts.export === 'object' ? next.drafts.export : {};
-      next.orders = Array.isArray(next.orders) ? next.orders : [];
-      next.activity = Array.isArray(next.activity) ? next.activity : [];
-
-      for (const wh of Object.keys(next.inventory)) {
-        if (!next.inventory[wh] || typeof next.inventory[wh] !== 'object') next.inventory[wh] = {};
-        for (const res of Object.keys(next.inventory[wh])) {
-          next.inventory[wh][res] = Math.max(0, Number(next.inventory[wh][res]) || 0);
-          if (!next.market[res]) next.market[res] = defaultMarketEntry(res);
-        }
-      }
-
-      for (const [res, entry] of Object.entries(next.market)) {
-        if (!entry || typeof entry !== 'object') next.market[res] = defaultMarketEntry(res);
-        const e = next.market[res];
-        if (!e.label) e.label = defaultMarketEntry(res).label;
-        e.baseBuy = Number.isFinite(e.baseBuy) ? e.baseBuy : defaultMarketEntry(res).baseBuy;
-        e.baseExport = Number.isFinite(e.baseExport) ? e.baseExport : e.baseBuy + 6;
-        e.currentBuy = Number.isFinite(e.currentBuy) ? e.currentBuy : e.baseBuy;
-        e.currentExport = Number.isFinite(e.currentExport) ? e.currentExport : e.baseExport;
-      }
-
-      next.orders = next.orders.map(order => ({
-        ...order,
-        linePrices: order.linePrices && typeof order.linePrices === 'object' ? order.linePrices : Object.fromEntries(Object.keys(order.lines || {}).map(res => [res, order.type === 'import' ? (next.market[res]?.currentBuy || next.market[res]?.baseBuy || 0) : (next.market[res]?.currentExport || next.market[res]?.baseExport || 0)]))
-      }));
-
-      const whs = Object.keys(next.inventory);
-      if (!whs.length) {
-        next.inventory.WHMAIN = {};
-        next.activeWarehouse = 'WHMAIN';
-      }
-      if (!next.activeWarehouse || !next.inventory[next.activeWarehouse]) {
-        next.activeWarehouse = Object.keys(next.inventory)[0];
-      }
-
-      return next;
-    }
-
-    function saveState(message) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      els.lastSavedText.textContent = 'last save: ' + new Date().toLocaleTimeString('hu-HU');
-      if (message) setStatus(message);
-    }
-
-    function loadState() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        state = normalizeState(SEED_STATE);
-        saveState('Demo állapot betöltve.');
-        return;
-      }
-      try {
-        state = normalizeState(JSON.parse(raw));
-      } catch (err) {
-        state = normalizeState(SEED_STATE);
-        saveState('Sérült mentés miatt demo állapot visszaállítva.');
-      }
-    }
-
-    function money(v) {
-      return state.currency + Math.round(v).toLocaleString('hu-HU');
-    }
-
-    function units(v) {
-      return Math.round(v).toLocaleString('hu-HU');
-    }
-
-    function nowLabel() {
-      return new Date().toLocaleTimeString('hu-HU');
-    }
-
-    function addActivity(text) {
-      state.activity.unshift({ text, ts: new Date().toISOString() });
-      state.activity = state.activity.slice(0, 10);
-    }
-
-    function setStatus(text) {
-      els.statusText.textContent = text;
-    }
-
-    function getWarehouseList() {
-      return Object.keys(state.inventory);
-    }
-
-    function getResourceIds() {
-      return Object.keys(state.market).sort((a, b) => state.market[a].label.localeCompare(state.market[b].label, 'hu'));
-    }
-
-    function getInventoryAmount(wh, resource) {
-      return Math.max(0, Number(state.inventory[wh]?.[resource] || 0));
-    }
-
-    function getReservedAmount(wh, resource) {
-      return state.orders
-        .filter(order => order.type === 'export' && order.wh === wh)
-        .reduce((sum, order) => sum + (order.lines[resource] || 0), 0);
-    }
-
-    function getFreeStock(wh, resource) {
-      return Math.max(0, getInventoryAmount(wh, resource) - getReservedAmount(wh, resource));
-    }
-
-    function getWarehouseTotalUnits(wh) {
-      return Object.values(state.inventory[wh] || {}).reduce((a, b) => a + (Number(b) || 0), 0);
-    }
-
-    function getActiveWarehouseFreeUnits() {
-      return getResourceIds().reduce((sum, res) => sum + getFreeStock(state.activeWarehouse, res), 0);
-    }
-
-    function getDraftEntries(type) {
-      return Object.entries(state.drafts[type] || {}).filter(([, qty]) => Number(qty) > 0);
-    }
-
-    function getDraftTotal(type) {
-      return getDraftEntries(type).reduce((sum, [res, qty]) => {
-        const price = type === 'import' ? state.market[res].currentBuy : state.market[res].currentExport;
-        return sum + (price * qty);
-      }, 0);
-    }
-
-    function totalResourceCount() {
-      return getResourceIds().length;
-    }
-
-    function addDraftLine(type, resource, qty) {
-      qty = Math.floor(Number(qty) || 0);
-      if (qty <= 0) {
-        setStatus('Pozitív mennyiség kell.');
-        return false;
-      }
-
-      if (!state.market[resource]) state.market[resource] = defaultMarketEntry(resource);
-
-      const current = Number(state.drafts[type][resource] || 0);
-      if (type === 'export') {
-        const free = getFreeStock(state.activeWarehouse, resource) - current;
-        if (qty > free) {
-          setStatus('Nincs elég szabad készlet export tervezethez.');
-          return false;
-        }
-      }
-
-      state.drafts[type][resource] = current + qty;
-      saveState(type === 'import' ? 'Import tétel hozzáadva.' : 'Export tétel hozzáadva.');
-      render();
-      return true;
-    }
-
-    function changeDraftLine(type, resource, delta) {
-      const current = Number(state.drafts[type][resource] || 0);
-      const next = current + delta;
-      if (type === 'export' && delta > 0) {
-        const free = getFreeStock(state.activeWarehouse, resource) - current;
-        if (delta > free) {
-          setStatus('Nincs elég szabad készlet ehhez a növeléshez.');
-          return;
-        }
-      }
-      if (next <= 0) delete state.drafts[type][resource];
-      else state.drafts[type][resource] = next;
-      saveState('Tervezet frissítve.');
-      render();
-    }
-
-    function clearDrafts() {
-      state.drafts.import = {};
-      state.drafts.export = {};
-      saveState('Tervezetek ürítve.');
-      render();
-    }
-
-    function finalizeImportOrder() {
-      const entries = getDraftEntries('import');
-      if (!entries.length) {
-        setStatus('Nincs import tétel a tervezetben.');
-        return;
-      }
-      const cost = getDraftTotal('import');
-      if (cost > state.cash) {
-        setStatus('Nincs elég szabad pénz import orderhez.');
-        return;
-      }
-
-      const order = {
-        id: 'ORD-' + String(state.nextOrderId).padStart(4, '0'),
-        type: 'import',
-        wh: state.activeWarehouse,
-        lines: Object.fromEntries(entries.map(([res, qty]) => [res, Math.floor(qty)])),
-        linePrices: Object.fromEntries(entries.map(([res]) => [res, Number(state.market[res].currentBuy.toFixed(2))])),
-        createdAt: new Date().toISOString(),
-        total: cost
-      };
-
-      state.nextOrderId += 1;
-      state.cash -= cost;
-      state.lockedCash += cost;
-      state.orders.unshift(order);
-      state.selectedOrderId = order.id;
-      state.drafts.import = {};
-      shiftMarketPrices(order, 'create');
-      addActivity(order.id + ' import order létrejött.');
-      saveState('Import order létrehozva.');
-      render();
-    }
-
-    function finalizeExportOrder() {
-      const entries = getDraftEntries('export');
-      if (!entries.length) {
-        setStatus('Nincs export tétel a tervezetben.');
-        return;
-      }
-
-      for (const [res, qty] of entries) {
-        if (qty > getFreeStock(state.activeWarehouse, res)) {
-          setStatus('Nincs elég szabad készlet export orderhez: ' + state.market[res].label);
-          return;
-        }
-      }
-
-      const revenue = getDraftTotal('export');
-      const order = {
-        id: 'ORD-' + String(state.nextOrderId).padStart(4, '0'),
-        type: 'export',
-        wh: state.activeWarehouse,
-        lines: Object.fromEntries(entries.map(([res, qty]) => [res, Math.floor(qty)])),
-        linePrices: Object.fromEntries(entries.map(([res]) => [res, Number(state.market[res].currentExport.toFixed(2))])),
-        createdAt: new Date().toISOString(),
-        total: revenue
-      };
-
-      state.nextOrderId += 1;
-      state.expectedRevenue += revenue;
-      state.orders.unshift(order);
-      state.selectedOrderId = order.id;
-      state.drafts.export = {};
-      shiftMarketPrices(order, 'create');
-      addActivity(order.id + ' export order létrejött.');
-      saveState('Export order létrehozva.');
-      render();
-    }
-
-    function shiftMarketPrices(order, phase) {
-      const impactFactor = phase === 'create' ? 1 : 0.65;
-
-      for (const [res, market] of Object.entries(state.market)) {
-        market.currentBuy += (market.baseBuy - market.currentBuy) * 0.12;
-        market.currentExport += (market.baseExport - market.currentExport) * 0.12;
-      }
-
-      for (const [res, qty] of Object.entries(order.lines || {})) {
-        const market = state.market[res] || (state.market[res] = defaultMarketEntry(res));
-        const step = Math.max(0.4, Math.min(4.5, (qty / 1600) * impactFactor));
-        if (order.type === 'import') {
-          market.currentBuy = clampPrice(market.currentBuy + step, market.baseBuy, 0.65, 1.8);
-          market.currentExport = clampPrice(market.currentExport + step * 0.35, market.baseExport, 0.65, 1.8);
-        } else {
-          market.currentExport = clampPrice(market.currentExport - step, market.baseExport, 0.60, 1.85);
-          market.currentBuy = clampPrice(market.currentBuy - step * 0.20, market.baseBuy, 0.60, 1.85);
-        }
-      }
-    }
-
-    function clampPrice(current, base, lowMul, highMul) {
-      const min = base * lowMul;
-      const max = base * highMul;
-      return Math.max(min, Math.min(max, Number(current.toFixed(2))));
-    }
-
-    function completeOrder(orderId) {
-      const orderIndex = state.orders.findIndex(order => order.id === orderId);
-      if (orderIndex === -1) {
-        setStatus('Order nem található.');
-        return;
-      }
-      const order = state.orders[orderIndex];
-
-      if (order.type === 'export') {
-        const ok = confirm('Ez végleges művelet. A hajó elmegy, az order törlődik. Folytatod?');
-        if (!ok) return;
-        for (const [res, qty] of Object.entries(order.lines)) {
-          const have = getInventoryAmount(order.wh, res);
-          state.inventory[order.wh][res] = Math.max(0, have - qty);
-        }
-        state.cash += order.total;
-        state.expectedRevenue = Math.max(0, state.expectedRevenue - order.total);
-        addActivity(order.id + ' export lezárva, hajó kiment.');
-      } else {
-        const ok = confirm('Import lezárása és betárolása?');
-        if (!ok) return;
-        for (const [res, qty] of Object.entries(order.lines)) {
-          if (!state.inventory[order.wh]) state.inventory[order.wh] = {};
-          state.inventory[order.wh][res] = getInventoryAmount(order.wh, res) + qty;
-        }
-        state.lockedCash = Math.max(0, state.lockedCash - order.total);
-        addActivity(order.id + ' import lezárva, áru betárolva.');
-      }
-
-      state.orders.splice(orderIndex, 1);
-      if (state.selectedOrderId === orderId) {
-        state.selectedOrderId = state.orders[0]?.id || null;
-      }
-      shiftMarketPrices(order, 'complete');
-      saveState(order.id + ' lezárva és törölve az aktív listából.');
-      render();
-    }
-
-    function renderTabs() {
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.toggle('active', tab.dataset.tab === currentTab());
-      });
-      document.querySelectorAll('.tab-panel').forEach(panel => {
-        panel.classList.toggle('active', panel.dataset.panel === currentTab());
-      });
-    }
-
-    function currentTab() {
-      return document.querySelector('.tab.active')?.dataset.tab || 'merchant';
-    }
-
-    function renderWarehouseSelect() {
-      const current = state.activeWarehouse;
-      els.warehouseSelect.innerHTML = getWarehouseList().map(wh => `<option value="${escapeHtml(wh)}">${escapeHtml(wh)}</option>`).join('');
-      els.warehouseSelect.value = current;
-    }
-
-    function renderStats() {
-      els.titleText.textContent = state.brokerName;
-      els.statCash.textContent = money(state.cash);
-      els.statLocked.textContent = money(state.lockedCash);
-      els.statRevenue.textContent = money(state.expectedRevenue);
-      els.statOrders.textContent = String(state.orders.length);
-      els.statUnits.textContent = units(getActiveWarehouseFreeUnits());
-      els.orderCounterText.textContent = 'ORD: ' + state.orders.length;
-      els.resourceCounterText.textContent = 'RES: ' + totalResourceCount();
-    }
-
-    function renderMerchant() {
-      const search = els.resourceSearch.value.trim().toLowerCase();
-      const wh = state.activeWarehouse;
-      const resources = getResourceIds().filter(res => {
-        const label = state.market[res].label.toLowerCase();
-        return !search || res.includes(search) || label.includes(search);
-      });
-
-      els.merchantHeadMeta.textContent = wh + ' | ' + resources.length + ' resource';
-
-      if (!resources.length) {
-        els.marketTableBody.innerHTML = '<tr><td colspan="8"><div class="empty">Nincs találat.</div></td></tr>';
-        return;
-      }
-
-      els.marketTableBody.innerHTML = resources.map(res => {
-        const m = state.market[res];
-        const stock = getInventoryAmount(wh, res);
-        const reserved = getReservedAmount(wh, res);
-        const free = Math.max(0, stock - reserved);
-        return `
-          <tr>
-            <td><strong>${escapeHtml(m.label)}</strong><br><span class="muted mono">${escapeHtml(res)}</span></td>
-            <td class="num">${money(m.currentBuy)}</td>
-            <td class="num">${money(m.currentExport)}</td>
-            <td class="num">${units(stock)}</td>
-            <td class="num">${units(reserved)}</td>
-            <td class="num ${free === 0 ? 'danger-text' : ''}">${units(free)}</td>
-            <td class="num">
-              <div class="qty-cell"><input type="number" min="1" step="1" value="1" data-qty-resource="${escapeHtml(res)}"></div>
-            </td>
-            <td class="num">
-              <div class="row-actions">
-                <button class="mini primary" data-action="add-import" data-resource="${escapeHtml(res)}">Import +</button>
-                <button class="mini success" data-action="add-export" data-resource="${escapeHtml(res)}" ${free <= 0 ? 'disabled' : ''}>Export +</button>
+    <div class="tab-panel active" data-panel="merchant">
+      <div class="col-left">
+        <div class="panel-box">
+          <div class="panel-head">Piaci lista <span class="right" id="merchantHeadMeta"></span></div>
+          <div class="panel-body">
+            <table>
+              <thead>
+                <tr>
+                  <th>Resource</th>
+                  <th class="num">Buy</th>
+                  <th class="num">Export</th>
+                  <th class="num">Stock</th>
+                  <th class="num">Reserved</th>
+                  <th class="num">Free</th>
+                  <th class="num">Qty</th>
+                  <th class="num">Művelet</th>
+                </tr>
+              </thead>
+              <tbody id="marketTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-right">
+        <div class="panel-box">
+          <div class="panel-head">Aktuális tervezetek <span class="right">Import + Export</span></div>
+          <div class="panel-body">
+            <div class="draft-card">
+              <div class="draft-head"><span><span class="chip import">Import</span> Beszerzési tervezet</span><span class="right" id="importDraftSummary">0 tétel</span></div>
+              <div id="importDraftList"></div>
+              <div class="panel-body" style="padding-top:0;">
+                <div class="field" style="width:100%; overflow:hidden;">
+                  <span><strong>Összköltség:</strong> <span id="importDraftTotal">$0</span></span>
+                  <span style="float:right;"><button id="commitImportBtn" class="primary">Import order létrehozása</button></span>
+                </div>
               </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function renderDrafts() {
-      renderDraftSection('import', els.importDraftList, els.importDraftSummary, els.importDraftTotal);
-      renderDraftSection('export', els.exportDraftList, els.exportDraftSummary, els.exportDraftTotal);
-      els.commitImportBtn.disabled = getDraftEntries('import').length === 0;
-      els.commitExportBtn.disabled = getDraftEntries('export').length === 0;
-    }
-
-    function renderDraftSection(type, container, summaryEl, totalEl) {
-      const entries = getDraftEntries(type);
-      const total = getDraftTotal(type);
-      summaryEl.textContent = entries.length + ' tétel';
-      totalEl.textContent = money(total);
-
-      if (!entries.length) {
-        container.innerHTML = '<div class="empty">Nincs tétel a tervezetben.</div>';
-        return;
-      }
-
-      container.innerHTML = entries.map(([res, qty]) => {
-        const price = type === 'import' ? state.market[res].currentBuy : state.market[res].currentExport;
-        return `
-          <div class="draft-row">
-            <div><strong>${escapeHtml(state.market[res].label)}</strong><br><span class="muted mono">${escapeHtml(res)}</span></div>
-            <div class="num">${units(qty)}</div>
-            <div class="num">${money(price)}</div>
-            <div class="num">${money(price * qty)}</div>
-            <div class="row-actions">
-              <button class="mini" data-draft-change="${type}" data-resource="${escapeHtml(res)}" data-delta="-1">-</button>
-              <button class="mini" data-draft-remove="${type}" data-resource="${escapeHtml(res)}">X</button>
+            </div>
+            <div class="draft-card">
+              <div class="draft-head"><span><span class="chip export">Export</span> Kimenő tervezet</span><span class="right" id="exportDraftSummary">0 tétel</span></div>
+              <div id="exportDraftList"></div>
+              <div class="panel-body" style="padding-top:0;">
+                <div class="field" style="width:100%; overflow:hidden;">
+                  <span><strong>Várható bevétel:</strong> <span id="exportDraftTotal">$0</span></span>
+                  <span style="float:right;"><button id="commitExportBtn" class="success">Export order létrehozása</button></span>
+                </div>
+              </div>
+            </div>
+            <div class="draft-card">
+              <div class="draft-head">Legutóbbi események</div>
+              <div id="activityList"></div>
             </div>
           </div>
-        `;
-      }).join('');
-    }
-
-    function renderActivity() {
-      if (!state.activity.length) {
-        els.activityList.innerHTML = '<div class="empty">Nincs esemény.</div>';
-        return;
-      }
-      els.activityList.innerHTML = state.activity.map(item => {
-        const ts = new Date(item.ts).toLocaleTimeString('hu-HU');
-        return `
-          <div class="draft-row" style="grid-template-columns: 70px 1fr;">
-            <div class="mono muted">${escapeHtml(ts)}</div>
-            <div>${escapeHtml(item.text)}</div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function renderWarehouse() {
-      const current = state.activeWarehouse;
-      els.warehouseHeadMeta.textContent = current + ' | total unit: ' + units(getWarehouseTotalUnits(current));
-
-      els.warehouseCards.innerHTML = getWarehouseList().map(wh => {
-        const total = getWarehouseTotalUnits(wh);
-        const active = wh === current ? 'active' : '';
-        return `
-          <div class="warehouse-card ${active}" data-set-wh="${escapeHtml(wh)}">
-            <div><strong>${escapeHtml(wh)}</strong></div>
-            <div class="muted">összes unit</div>
-            <div class="mono" style="font-size:18px; font-weight:700;">${units(total)}</div>
-          </div>
-        `;
-      }).join('');
-
-      const resources = Object.keys(state.inventory[current] || {}).sort((a, b) => state.market[a].label.localeCompare(state.market[b].label, 'hu'));
-      if (!resources.length) {
-        els.warehouseTableBody.innerHTML = '<tr><td colspan="4"><div class="empty">A kiválasztott WH üres.</div></td></tr>';
-      } else {
-        els.warehouseTableBody.innerHTML = resources.map(res => {
-          const stock = getInventoryAmount(current, res);
-          const reserved = getReservedAmount(current, res);
-          const free = stock - reserved;
-          return `
-            <tr>
-              <td><strong>${escapeHtml(state.market[res].label)}</strong><br><span class="muted mono">${escapeHtml(res)}</span></td>
-              <td class="num">${units(stock)}</td>
-              <td class="num">${units(reserved)}</td>
-              <td class="num ${free === 0 ? 'danger-text' : ''}">${units(free)}</td>
-            </tr>
-          `;
-        }).join('');
-      }
-
-      els.jsonPreview.textContent = JSON.stringify(state.inventory, null, 2);
-    }
-
-    function renderOrders() {
-      els.ordersHeadMeta.textContent = state.orders.length + ' aktív order';
-      if (!state.orders.length) {
-        els.ordersList.innerHTML = '<div class="empty">Nincs aktív order.</div>';
-        els.selectedOrderMeta.textContent = 'Nincs kijelölve';
-        els.orderDetailPane.innerHTML = '<div class="empty">Válassz ordert a listából.</div>';
-        return;
-      }
-
-      if (!state.selectedOrderId || !state.orders.some(order => order.id === state.selectedOrderId)) {
-        state.selectedOrderId = state.orders[0].id;
-      }
-
-      els.ordersList.innerHTML = state.orders.map(order => {
-        const active = order.id === state.selectedOrderId ? 'active' : '';
-        return `
-          <div class="order-item ${active}" data-order-select="${escapeHtml(order.id)}">
-            <div class="order-top">
-              <strong>${escapeHtml(order.id)}</strong>
-              <span class="chip ${order.type}">${order.type}</span>
-            </div>
-            <div class="order-meta">
-              <span class="mono">${escapeHtml(order.wh)}</span>
-              <span>${Object.keys(order.lines).length} tétel</span>
-            </div>
-            <div class="mono">${money(order.total)}</div>
-          </div>
-        `;
-      }).join('');
-
-      const order = state.orders.find(o => o.id === state.selectedOrderId);
-      if (!order) {
-        els.selectedOrderMeta.textContent = 'Nincs kijelölve';
-        els.orderDetailPane.innerHTML = '<div class="empty">Válassz ordert a listából.</div>';
-        return;
-      }
-
-      els.selectedOrderMeta.textContent = order.id + ' | ' + order.type.toUpperCase();
-      const created = new Date(order.createdAt).toLocaleString('hu-HU');
-      const actionLabel = order.type === 'export' ? 'Felrakodás kész / Hajó indítás' : 'Betárolás lezárása';
-      const actionClass = order.type === 'export' ? 'danger' : 'success';
-      const warning = order.type === 'export'
-        ? '<div class="warning-box">Ez végleges művelet. A hajó eltűnik és az order visszavonhatatlanul törlődik.</div>'
-        : '<div class="warning-box" style="background:#e2f2e4; border-color:#89b592; color:#1c5728;">Betároláskor az áru bekerül a WH készletébe, az import order pedig eltűnik az aktív listából.</div>';
-
-      els.orderDetailPane.innerHTML = `
-        <div class="detail-grid">
-          <div class="detail-box"><div class="k">Order ID</div><div class="v mono">${escapeHtml(order.id)}</div></div>
-          <div class="detail-box"><div class="k">Típus</div><div class="v"><span class="chip ${order.type}">${order.type}</span></div></div>
-          <div class="detail-box"><div class="k">Warehouse</div><div class="v mono">${escapeHtml(order.wh)}</div></div>
-          <div class="detail-box"><div class="k">Összérték</div><div class="v">${money(order.total)}</div></div>
-          <div class="detail-box"><div class="k">Létrehozva</div><div class="v">${escapeHtml(created)}</div></div>
-          <div class="detail-box"><div class="k">Tételek száma</div><div class="v">${Object.keys(order.lines).length}</div></div>
         </div>
-        <div class="order-lines">
-          <table>
-            <thead>
-              <tr>
-                <th>Resource</th>
-                <th class="num">Qty</th>
-                <th class="num">Unit Price</th>
-                <th class="num">Line Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${Object.entries(order.lines).map(([res, qty]) => {
-                const unit = Number(order.linePrices?.[res] || (order.type === 'import' ? state.market[res].currentBuy : state.market[res].currentExport));
-                return `
-                  <tr>
-                    <td><strong>${escapeHtml(state.market[res].label)}</strong><br><span class="muted mono">${escapeHtml(res)}</span></td>
-                    <td class="num">${units(qty)}</td>
-                    <td class="num">${money(unit)}</td>
-                    <td class="num">${money(unit * qty)}</td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-        ${warning}
-        <div style="display:flex; justify-content:flex-end; margin-top:12px; gap:8px;">
-          <button class="${actionClass}" data-complete-order="${escapeHtml(order.id)}">${actionLabel}</button>
-        </div>
-      `;
-    }
+      </div>
+      <div class="clearfix"></div>
+    </div>
 
-    function render() {
+    <div class="tab-panel" data-panel="warehouse">
+      <div class="col-left">
+        <div class="panel-box">
+          <div class="panel-head">Raktárnézet <span class="right" id="warehouseHeadMeta"></span></div>
+          <div class="panel-body">
+            <div id="warehouseCards"></div>
+            <div style="height:12px;"></div>
+            <table>
+              <thead><tr><th>Resource</th><th class="num">Stock</th><th class="num">Reserved</th><th class="num">Free</th></tr></thead>
+              <tbody id="warehouseTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-right">
+        <div class="panel-box">
+          <div class="panel-head">Aktuális inventory JSON <span class="right mono">state.inventory</span></div>
+          <div class="panel-body"><div class="json-box" id="jsonPreview"></div></div>
+        </div>
+      </div>
+      <div class="clearfix"></div>
+    </div>
+
+    <div class="tab-panel" data-panel="orders">
+      <div class="orders-left">
+        <div class="panel-box">
+          <div class="panel-head">Aktív orderek <span class="right" id="ordersHeadMeta"></span></div>
+          <div class="panel-body"><div id="ordersList"></div></div>
+        </div>
+      </div>
+      <div class="orders-right">
+        <div class="panel-box">
+          <div class="panel-head">Order részletek <span class="right" id="selectedOrderMeta">Nincs kijelölve</span></div>
+          <div class="panel-body" id="orderDetailPane"></div>
+        </div>
+      </div>
+      <div class="clearfix"></div>
+    </div>
+
+    <div class="tab-panel" data-panel="messages">
+      <div class="messages-left">
+        <div class="panel-box">
+          <div class="panel-head">Beérkező üzenetek <span class="right" id="messagesHeadMeta"></span></div>
+          <div class="panel-body"><div id="messagesList"></div></div>
+        </div>
+      </div>
+      <div class="messages-right">
+        <div class="panel-box">
+          <div class="panel-head">Üzenet részletek <span class="right" id="selectedMessageMeta">Nincs kijelölve</span></div>
+          <div class="panel-body" id="messageDetailPane"></div>
+        </div>
+      </div>
+      <div class="clearfix"></div>
+    </div>
+
+    <div class="statusbar">
+      <div class="status-left"><span id="statusText">Kész.</span> <span class="mono" id="lastSavedText">last save: --</span></div>
+      <div class="status-right"><span class="mono" id="orderCounterText">ORD: 0</span><span class="mono" id="resourceCounterText">RES: 0</span></div>
+    </div>
+  </div>
+</div>
+<script>
+var STORAGE_KEY = 'southside-merchant-terminal-v2';
+var SEED_STATE = {
+  brokerName: 'Southside Merchant Terminal',
+  currency: '$',
+  activeWarehouse: 'WHMINE',
+  cash: 260000,
+  lockedCash: 0,
+  expectedRevenue: 0,
+  nextOrderId: 1,
+  selectedOrderId: null,
+  selectedMessageId: null,
+  inventory: {
+    WHMINE: { iron: 8200, coal: 4600, copper: 1250, stone: 9800 },
+    WHFOOD: { ration: 1600, apple: 750, water: 1200 },
+    WHPARTS: { parts: 420, bearings: 180, chemicals: 300, oil: 0 }
+  },
+  market: {
+    iron: { label: 'Iron', baseBuy: 19, baseExport: 24, currentBuy: 19, currentExport: 24 },
+    coal: { label: 'Coal', baseBuy: 11, baseExport: 15, currentBuy: 11, currentExport: 15 },
+    copper: { label: 'Copper', baseBuy: 27, baseExport: 34, currentBuy: 27, currentExport: 34 },
+    stone: { label: 'Stone', baseBuy: 6, baseExport: 8, currentBuy: 6, currentExport: 8 },
+    ration: { label: 'Ration', baseBuy: 14, baseExport: 19, currentBuy: 14, currentExport: 19 },
+    apple: { label: 'Apple', baseBuy: 12, baseExport: 16, currentBuy: 12, currentExport: 16 },
+    water: { label: 'Water', baseBuy: 5, baseExport: 8, currentBuy: 5, currentExport: 8 },
+    parts: { label: 'Parts', baseBuy: 39, baseExport: 48, currentBuy: 39, currentExport: 48 },
+    bearings: { label: 'Bearings', baseBuy: 33, baseExport: 41, currentBuy: 33, currentExport: 41 },
+    chemicals: { label: 'Chemicals', baseBuy: 28, baseExport: 36, currentBuy: 28, currentExport: 36 },
+    oil: { label: 'Oil', baseBuy: 44, baseExport: 53, currentBuy: 44, currentExport: 53 },
+    wood: { label: 'Wood', baseBuy: 16, baseExport: 22, currentBuy: 16, currentExport: 22 },
+    food: { label: 'Food', baseBuy: 18, baseExport: 24, currentBuy: 18, currentExport: 24 }
+  },
+  drafts: { import: {}, export: {} },
+  orders: [],
+  messages: [
+    { id: 'MSG-0001', orderId: 'SYSTEM', type: 'system', title: 'Terminál indulás', body: 'A rendszer készen áll. A raktári személyzet visszajelzései ide fognak beérkezni.', createdAt: new Date().toISOString(), read: false }
+  ],
+  activity: [
+    { text: 'Rendszer indulás kész.', ts: new Date().toISOString() }
+  ]
+};
+var state = null;
+var els = {};
+function byId(id) { return document.getElementById(id); }
+function initEls() {
+  els.titleText = byId('titleText');
+  els.warehouseSelect = byId('warehouseSelect');
+  els.resourceSearch = byId('resourceSearch');
+  els.syncSeedBtn = byId('syncSeedBtn');
+  els.clearDraftsBtn = byId('clearDraftsBtn');
+  els.statCash = byId('statCash');
+  els.statLocked = byId('statLocked');
+  els.statRevenue = byId('statRevenue');
+  els.statOrders = byId('statOrders');
+  els.statUnits = byId('statUnits');
+  els.marketTableBody = byId('marketTableBody');
+  els.merchantHeadMeta = byId('merchantHeadMeta');
+  els.importDraftList = byId('importDraftList');
+  els.exportDraftList = byId('exportDraftList');
+  els.importDraftSummary = byId('importDraftSummary');
+  els.exportDraftSummary = byId('exportDraftSummary');
+  els.importDraftTotal = byId('importDraftTotal');
+  els.exportDraftTotal = byId('exportDraftTotal');
+  els.commitImportBtn = byId('commitImportBtn');
+  els.commitExportBtn = byId('commitExportBtn');
+  els.activityList = byId('activityList');
+  els.warehouseHeadMeta = byId('warehouseHeadMeta');
+  els.warehouseCards = byId('warehouseCards');
+  els.warehouseTableBody = byId('warehouseTableBody');
+  els.jsonPreview = byId('jsonPreview');
+  els.ordersHeadMeta = byId('ordersHeadMeta');
+  els.ordersList = byId('ordersList');
+  els.selectedOrderMeta = byId('selectedOrderMeta');
+  els.orderDetailPane = byId('orderDetailPane');
+  els.messagesHeadMeta = byId('messagesHeadMeta');
+  els.messagesList = byId('messagesList');
+  els.selectedMessageMeta = byId('selectedMessageMeta');
+  els.messageDetailPane = byId('messageDetailPane');
+  els.statusText = byId('statusText');
+  els.lastSavedText = byId('lastSavedText');
+  els.orderCounterText = byId('orderCounterText');
+  els.resourceCounterText = byId('resourceCounterText');
+}
+function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+function trimString(s) { return String(s == null ? '' : s).replace(/^\s+|\s+$/g, ''); }
+function repeatChar(ch, count) { var out = ''; while (out.length < count) out += ch; return out; }
+function padNumber(num, len) { var s = String(num); while (s.length < len) s = '0' + s; return s; }
+function safeReplaceAll(str, find, repl) { return String(str).split(find).join(repl); }
+function escapeHtml(str) {
+  str = String(str == null ? '' : str);
+  str = safeReplaceAll(str, '&', '&amp;');
+  str = safeReplaceAll(str, '<', '&lt;');
+  str = safeReplaceAll(str, '>', '&gt;');
+  str = safeReplaceAll(str, '"', '&quot;');
+  str = safeReplaceAll(str, "'", '&#39;');
+  return str;
+}
+function numberOrZero(v) { v = Number(v); return isNaN(v) ? 0 : v; }
+function defaultMarketEntry(id) {
+  var pretty = String(id).replace(/[_-]+/g, ' ').replace(/\b\w/g, function(m) { return m.toUpperCase(); });
+  var hash = 0;
+  var i;
+  for (i = 0; i < id.length; i++) hash += id.charCodeAt(i);
+  var buy = 10 + (hash % 25);
+  return { label: pretty, baseBuy: buy, baseExport: buy + 6, currentBuy: buy, currentExport: buy + 6 };
+}
+function getObjectKeys(obj) {
+  var keys = [];
+  var k;
+  for (k in obj) if (Object.prototype.hasOwnProperty.call(obj, k)) keys.push(k);
+  return keys;
+}
+function forEachOwn(obj, fn) {
+  var k;
+  for (k in obj) if (Object.prototype.hasOwnProperty.call(obj, k)) fn(k, obj[k]);
+}
+function hasArray(arr, value) {
+  var i;
+  for (i = 0; i < arr.length; i++) if (arr[i] === value) return true;
+  return false;
+}
+function buildLinePrices(order, market) {
+  var result = {};
+  var lines = order.lines || {};
+  forEachOwn(lines, function(res) {
+    var m = market[res] || defaultMarketEntry(res);
+    result[res] = order.type === 'import' ? (m.currentBuy || m.baseBuy || 0) : (m.currentExport || m.baseExport || 0);
+  });
+  return result;
+}
+function normalizeState(raw) {
+  var next = deepClone(raw || SEED_STATE);
+  if (!next.brokerName) next.brokerName = 'Southside Merchant Terminal';
+  if (!next.currency) next.currency = '$';
+  next.cash = isFinite(next.cash) ? next.cash : 0;
+  next.lockedCash = isFinite(next.lockedCash) ? next.lockedCash : 0;
+  next.expectedRevenue = isFinite(next.expectedRevenue) ? next.expectedRevenue : 0;
+  next.nextOrderId = isFinite(next.nextOrderId) ? next.nextOrderId : 1;
+  if (typeof next.selectedOrderId === 'undefined') next.selectedOrderId = null;
+  if (typeof next.selectedMessageId === 'undefined') next.selectedMessageId = null;
+  if (!next.inventory || typeof next.inventory !== 'object') next.inventory = {};
+  if (!next.market || typeof next.market !== 'object') next.market = {};
+  if (!next.drafts || typeof next.drafts !== 'object') next.drafts = { import: {}, export: {} };
+  if (!next.drafts.import || typeof next.drafts.import !== 'object') next.drafts.import = {};
+  if (!next.drafts.export || typeof next.drafts.export !== 'object') next.drafts.export = {};
+  if (!next.orders || !next.orders.splice) next.orders = [];
+  if (!next.messages || !next.messages.splice) next.messages = [];
+  if (!next.activity || !next.activity.splice) next.activity = [];
+  forEachOwn(next.inventory, function(wh, inv) {
+    if (!inv || typeof inv !== 'object') next.inventory[wh] = {};
+    inv = next.inventory[wh];
+    forEachOwn(inv, function(res, qty) {
+      inv[res] = Math.max(0, numberOrZero(qty));
+      if (!next.market[res]) next.market[res] = defaultMarketEntry(res);
+    });
+  });
+  forEachOwn(next.market, function(res, entry) {
+    if (!entry || typeof entry !== 'object') next.market[res] = defaultMarketEntry(res);
+    var e = next.market[res];
+    if (!e.label) e.label = defaultMarketEntry(res).label;
+    e.baseBuy = isFinite(e.baseBuy) ? e.baseBuy : defaultMarketEntry(res).baseBuy;
+    e.baseExport = isFinite(e.baseExport) ? e.baseExport : e.baseBuy + 6;
+    e.currentBuy = isFinite(e.currentBuy) ? e.currentBuy : e.baseBuy;
+    e.currentExport = isFinite(e.currentExport) ? e.currentExport : e.baseExport;
+  });
+  var newOrders = [];
+  var i;
+  for (i = 0; i < next.orders.length; i++) {
+    var order = next.orders[i] || {};
+    if (!order.linePrices || typeof order.linePrices !== 'object') order.linePrices = buildLinePrices(order, next.market);
+    newOrders.push(order);
+  }
+  next.orders = newOrders;
+  var newMessages = [];
+  for (i = 0; i < next.messages.length; i++) {
+    var message = next.messages[i] || {};
+    newMessages.push({
+      id: message.id || ('MSG-' + padNumber(i + 1, 4)),
+      orderId: message.orderId || 'SYSTEM',
+      type: message.type || 'system',
+      title: message.title || 'Üzenet',
+      body: message.body || '',
+      createdAt: message.createdAt || new Date().toISOString(),
+      read: !!message.read
+    });
+  }
+  next.messages = newMessages;
+  var whs = getObjectKeys(next.inventory);
+  if (!whs.length) {
+    next.inventory.WHMAIN = {};
+    next.activeWarehouse = 'WHMAIN';
+    whs = ['WHMAIN'];
+  }
+  if (!next.activeWarehouse || !next.inventory[next.activeWarehouse]) next.activeWarehouse = whs[0];
+  return next;
+}
+function storageSet(key, value) { try { if (window.localStorage) localStorage.setItem(key, value); } catch (e) {} }
+function storageGet(key) { try { if (window.localStorage) return localStorage.getItem(key); } catch (e) {} return null; }
+function saveState(message) {
+  storageSet(STORAGE_KEY, JSON.stringify(state));
+  els.lastSavedText.innerHTML = 'last save: ' + new Date().toLocaleTimeString('hu-HU');
+  if (message) setStatus(message);
+}
+function loadState() {
+  var raw = storageGet(STORAGE_KEY);
+  if (!raw) {
+    state = normalizeState(SEED_STATE);
+    saveState('Demo állapot betöltve.');
+    return;
+  }
+  try { state = normalizeState(JSON.parse(raw)); }
+  catch (e) {
+    state = normalizeState(SEED_STATE);
+    saveState('Sérült mentés miatt demo állapot visszaállítva.');
+  }
+}
+function money(v) { return state.currency + Math.round(numberOrZero(v)).toLocaleString('hu-HU'); }
+function units(v) { return Math.round(numberOrZero(v)).toLocaleString('hu-HU'); }
+function addActivity(text) {
+  state.activity.unshift({ text: text, ts: new Date().toISOString() });
+  state.activity = state.activity.slice(0, 10);
+}
+function setStatus(text) { els.statusText.innerHTML = escapeHtml(text); }
+function getWarehouseList() { return getObjectKeys(state.inventory); }
+function getResourceIds() {
+  var ids = getObjectKeys(state.market);
+  ids.sort(function(a, b) {
+    return String(state.market[a].label).localeCompare(String(state.market[b].label), 'hu');
+  });
+  return ids;
+}
+function getInventoryAmount(wh, resource) {
+  var inv = state.inventory[wh];
+  if (!inv) return 0;
+  return Math.max(0, numberOrZero(inv[resource]));
+}
+function getReservedAmount(wh, resource) {
+  var sum = 0;
+  var i;
+  for (i = 0; i < state.orders.length; i++) {
+    var order = state.orders[i];
+    if (order.type === 'export' && order.wh === wh) sum += numberOrZero((order.lines || {})[resource]);
+  }
+  return sum;
+}
+function getFreeStock(wh, resource) { return Math.max(0, getInventoryAmount(wh, resource) - getReservedAmount(wh, resource)); }
+function getWarehouseTotalUnits(wh) {
+  var total = 0;
+  var inv = state.inventory[wh] || {};
+  forEachOwn(inv, function(k, v) { total += numberOrZero(v); });
+  return total;
+}
+function getActiveWarehouseFreeUnits() {
+  var total = 0;
+  var ids = getResourceIds();
+  var i;
+  for (i = 0; i < ids.length; i++) total += getFreeStock(state.activeWarehouse, ids[i]);
+  return total;
+}
+function getDraftEntries(type) {
+  var list = [];
+  var d = state.drafts[type] || {};
+  forEachOwn(d, function(res, qty) { if (numberOrZero(qty) > 0) list.push([res, numberOrZero(qty)]); });
+  return list;
+}
+function getDraftTotal(type) {
+  var entries = getDraftEntries(type);
+  var total = 0;
+  var i;
+  for (i = 0; i < entries.length; i++) {
+    var res = entries[i][0];
+    var qty = entries[i][1];
+    var price = type === 'import' ? state.market[res].currentBuy : state.market[res].currentExport;
+    total += price * qty;
+  }
+  return total;
+}
+function totalResourceCount() { return getResourceIds().length; }
+function getUnreadMessageCount() {
+  var c = 0, i;
+  for (i = 0; i < state.messages.length; i++) if (!state.messages[i].read) c++;
+  return c;
+}
+function nextMessageId() {
+  var max = 0, i;
+  for (i = 0; i < state.messages.length; i++) {
+    var id = String(state.messages[i].id || '').replace(/\D+/g, '');
+    var n = parseInt(id, 10); if (!isNaN(n) && n > max) max = n;
+  }
+  return 'MSG-' + padNumber(max + 1, 4);
+}
+function addMessage(message) {
+  var msg = {
+    id: nextMessageId(),
+    orderId: message.orderId || 'SYSTEM',
+    type: message.type || 'system',
+    title: message.title || 'Üzenet',
+    body: message.body || '',
+    createdAt: message.createdAt || new Date().toISOString(),
+    read: false
+  };
+  state.messages.unshift(msg);
+  state.messages = state.messages.slice(0, 200);
+  state.selectedMessageId = msg.id;
+  addActivity('Új üzenet érkezett: ' + msg.title);
+  saveState('Új üzenet érkezett.');
+  render();
+  return deepClone(msg);
+}
+function markMessageRead(messageId, shouldRender) {
+  if (typeof shouldRender === 'undefined') shouldRender = true;
+  var i;
+  for (i = 0; i < state.messages.length; i++) {
+    if (state.messages[i].id === messageId) {
+      state.messages[i].read = true;
+      if (shouldRender) {
+        saveState('Üzenet olvasottra állítva.');
+        render();
+      }
+      return;
+    }
+  }
+}
+function addDraftLine(type, resource, qty) {
+  qty = Math.floor(numberOrZero(qty));
+  if (qty <= 0) { setStatus('Pozitív mennyiség kell.'); return false; }
+  if (!state.market[resource]) state.market[resource] = defaultMarketEntry(resource);
+  var current = numberOrZero(state.drafts[type][resource]);
+  if (type === 'export') {
+    var free = getFreeStock(state.activeWarehouse, resource) - current;
+    if (qty > free) { setStatus('Nincs elég szabad készlet export tervezethez.'); return false; }
+  }
+  state.drafts[type][resource] = current + qty;
+  saveState(type === 'import' ? 'Import tétel hozzáadva.' : 'Export tétel hozzáadva.');
+  render();
+  return true;
+}
+function changeDraftLine(type, resource, delta) {
+  var current = numberOrZero(state.drafts[type][resource]);
+  var next = current + delta;
+  if (type === 'export' && delta > 0) {
+    var free = getFreeStock(state.activeWarehouse, resource) - current;
+    if (delta > free) { setStatus('Nincs elég szabad készlet ehhez a növeléshez.'); return; }
+  }
+  if (next <= 0) delete state.drafts[type][resource]; else state.drafts[type][resource] = next;
+  saveState('Tervezet frissítve.');
+  render();
+}
+function clearDrafts() { state.drafts.import = {}; state.drafts.export = {}; saveState('Tervezetek ürítve.'); render(); }
+function buildLinesFromEntries(entries) {
+  var obj = {}; var i;
+  for (i = 0; i < entries.length; i++) obj[entries[i][0]] = Math.floor(entries[i][1]);
+  return obj;
+}
+function buildOrderLinePrices(entries, type) {
+  var obj = {}; var i, res;
+  for (i = 0; i < entries.length; i++) {
+    res = entries[i][0];
+    obj[res] = Number((type === 'import' ? state.market[res].currentBuy : state.market[res].currentExport).toFixed(2));
+  }
+  return obj;
+}
+function finalizeImportOrder() {
+  var entries = getDraftEntries('import');
+  if (!entries.length) { setStatus('Nincs import tétel a tervezetben.'); return; }
+  var cost = getDraftTotal('import');
+  if (cost > state.cash) { setStatus('Nincs elég szabad pénz import orderhez.'); return; }
+  var order = {
+    id: 'ORD-' + padNumber(state.nextOrderId, 4),
+    type: 'import',
+    wh: state.activeWarehouse,
+    lines: buildLinesFromEntries(entries),
+    linePrices: buildOrderLinePrices(entries, 'import'),
+    createdAt: new Date().toISOString(),
+    total: cost
+  };
+  state.nextOrderId += 1;
+  state.cash -= cost;
+  state.lockedCash += cost;
+  state.orders.unshift(order);
+  state.selectedOrderId = order.id;
+  state.drafts.import = {};
+  shiftMarketPrices(order, 'create');
+  addActivity(order.id + ' import order létrejött.');
+  saveState('Import order létrehozva.');
+  render();
+}
+function finalizeExportOrder() {
+  var entries = getDraftEntries('export');
+  var i, res, qty;
+  if (!entries.length) { setStatus('Nincs export tétel a tervezetben.'); return; }
+  for (i = 0; i < entries.length; i++) {
+    res = entries[i][0]; qty = entries[i][1];
+    if (qty > getFreeStock(state.activeWarehouse, res)) { setStatus('Nincs elég szabad készlet export orderhez: ' + state.market[res].label); return; }
+  }
+  var revenue = getDraftTotal('export');
+  var order = {
+    id: 'ORD-' + padNumber(state.nextOrderId, 4),
+    type: 'export',
+    wh: state.activeWarehouse,
+    lines: buildLinesFromEntries(entries),
+    linePrices: buildOrderLinePrices(entries, 'export'),
+    createdAt: new Date().toISOString(),
+    total: revenue
+  };
+  state.nextOrderId += 1;
+  state.expectedRevenue += revenue;
+  state.orders.unshift(order);
+  state.selectedOrderId = order.id;
+  state.drafts.export = {};
+  shiftMarketPrices(order, 'create');
+  addActivity(order.id + ' export order létrejött.');
+  saveState('Export order létrehozva.');
+  render();
+}
+function clampPrice(current, base, lowMul, highMul) {
+  var min = base * lowMul, max = base * highMul;
+  return Math.max(min, Math.min(max, Number(current.toFixed(2))));
+}
+function shiftMarketPrices(order, phase) {
+  var impactFactor = phase === 'create' ? 1 : 0.65;
+  forEachOwn(state.market, function(res, market) {
+    market.currentBuy += (market.baseBuy - market.currentBuy) * 0.12;
+    market.currentExport += (market.baseExport - market.currentExport) * 0.12;
+  });
+  forEachOwn(order.lines || {}, function(res, qty) {
+    var market = state.market[res];
+    if (!market) { state.market[res] = defaultMarketEntry(res); market = state.market[res]; }
+    var step = Math.max(0.4, Math.min(4.5, (qty / 1600) * impactFactor));
+    if (order.type === 'import') {
+      market.currentBuy = clampPrice(market.currentBuy + step, market.baseBuy, 0.65, 1.8);
+      market.currentExport = clampPrice(market.currentExport + step * 0.35, market.baseExport, 0.65, 1.8);
+    } else {
+      market.currentExport = clampPrice(market.currentExport - step, market.baseExport, 0.60, 1.85);
+      market.currentBuy = clampPrice(market.currentBuy - step * 0.20, market.baseBuy, 0.60, 1.85);
+    }
+  });
+}
+function completeOrder(orderId) {
+  var orderIndex = -1, i;
+  for (i = 0; i < state.orders.length; i++) if (state.orders[i].id === orderId) { orderIndex = i; break; }
+  if (orderIndex === -1) { setStatus('Order nem található.'); return; }
+  var order = state.orders[orderIndex];
+  if (order.type === 'export') {
+    if (!window.confirm('Ez végleges művelet. A hajó elmegy, az order törlődik. Folytatod?')) return;
+    forEachOwn(order.lines, function(res, qty) {
+      var have = getInventoryAmount(order.wh, res);
+      state.inventory[order.wh][res] = Math.max(0, have - qty);
+    });
+    state.cash += order.total;
+    state.expectedRevenue = Math.max(0, state.expectedRevenue - order.total);
+    addActivity(order.id + ' export lezárva, hajó kiment.');
+  } else {
+    if (!window.confirm('Import lezárása és betárolása?')) return;
+    forEachOwn(order.lines, function(res, qty) {
+      if (!state.inventory[order.wh]) state.inventory[order.wh] = {};
+      state.inventory[order.wh][res] = getInventoryAmount(order.wh, res) + qty;
+    });
+    state.lockedCash = Math.max(0, state.lockedCash - order.total);
+    addActivity(order.id + ' import lezárva, áru betárolva.');
+  }
+  state.orders.splice(orderIndex, 1);
+  if (state.selectedOrderId === orderId) state.selectedOrderId = state.orders.length ? state.orders[0].id : null;
+  shiftMarketPrices(order, 'complete');
+  saveState(order.id + ' lezárva és törölve az aktív listából.');
+  render();
+}
+function getCurrentTab() {
+  var tabs = document.getElementsByClassName('tab');
+  var i;
+  for (i = 0; i < tabs.length; i++) if (hasClass(tabs[i], 'active')) return tabs[i].getAttribute('data-tab');
+  return 'merchant';
+}
+function removeClass(el, cls) {
+  if (!el) return;
+  var re = new RegExp('(^|\\s)' + cls + '(\\s|$)', 'g');
+  el.className = trimString(el.className.replace(re, ' '));
+}
+function addClass(el, cls) { if (!el) return; if (!hasClass(el, cls)) el.className = trimString(el.className + ' ' + cls); }
+function hasClass(el, cls) { return (' ' + el.className + ' ').indexOf(' ' + cls + ' ') !== -1; }
+function renderTabs() {
+  var tab = getCurrentTab();
+  var tabs = document.getElementsByClassName('tab');
+  var panels = document.getElementsByClassName('tab-panel');
+  var i;
+  for (i = 0; i < tabs.length; i++) {
+    if (tabs[i].getAttribute('data-tab') === tab) addClass(tabs[i], 'active'); else removeClass(tabs[i], 'active');
+  }
+  for (i = 0; i < panels.length; i++) {
+    if (panels[i].getAttribute('data-panel') === tab) addClass(panels[i], 'active'); else removeClass(panels[i], 'active');
+  }
+}
+function renderWarehouseSelect() {
+  var list = getWarehouseList();
+  var html = '', i, wh;
+  for (i = 0; i < list.length; i++) {
+    wh = list[i];
+    html += '<option value="' + escapeHtml(wh) + '">' + escapeHtml(wh) + '</option>';
+  }
+  els.warehouseSelect.innerHTML = html;
+  els.warehouseSelect.value = state.activeWarehouse;
+}
+function renderStats() {
+  els.titleText.innerHTML = escapeHtml(state.brokerName);
+  els.statCash.innerHTML = money(state.cash);
+  els.statLocked.innerHTML = money(state.lockedCash);
+  els.statRevenue.innerHTML = money(state.expectedRevenue);
+  els.statOrders.innerHTML = String(state.orders.length);
+  els.statUnits.innerHTML = units(getActiveWarehouseFreeUnits());
+  els.orderCounterText.innerHTML = 'ORD: ' + state.orders.length + ' | MSG: ' + getUnreadMessageCount();
+  els.resourceCounterText.innerHTML = 'RES: ' + totalResourceCount();
+}
+function renderMerchant() {
+  var search = trimString(els.resourceSearch.value).toLowerCase();
+  var wh = state.activeWarehouse;
+  var ids = getResourceIds();
+  var html = '';
+  var visibleCount = 0;
+  var i, res, label, m, stock, reserved, free;
+  for (i = 0; i < ids.length; i++) {
+    res = ids[i];
+    label = String(state.market[res].label || '').toLowerCase();
+    if (search && res.toLowerCase().indexOf(search) === -1 && label.indexOf(search) === -1) continue;
+    visibleCount++;
+    m = state.market[res];
+    stock = getInventoryAmount(wh, res);
+    reserved = getReservedAmount(wh, res);
+    free = Math.max(0, stock - reserved);
+    html += '<tr>' +
+      '<td><strong>' + escapeHtml(m.label) + '</strong><br><span class="muted mono">' + escapeHtml(res) + '</span></td>' +
+      '<td class="num">' + money(m.currentBuy) + '</td>' +
+      '<td class="num">' + money(m.currentExport) + '</td>' +
+      '<td class="num">' + units(stock) + '</td>' +
+      '<td class="num">' + units(reserved) + '</td>' +
+      '<td class="num' + (free === 0 ? ' danger-text' : '') + '">' + units(free) + '</td>' +
+      '<td class="num"><input type="number" min="1" step="1" value="1" data-qty-resource="' + escapeHtml(res) + '"></td>' +
+      '<td class="num"><div class="row-actions"><button class="mini primary" data-action="add-import" data-resource="' + escapeHtml(res) + '">Import +</button><button class="mini success" data-action="add-export" data-resource="' + escapeHtml(res) + '"' + (free <= 0 ? ' disabled="disabled"' : '') + '>Export +</button></div></td>' +
+      '</tr>';
+  }
+  els.merchantHeadMeta.innerHTML = escapeHtml(wh + ' | ' + visibleCount + ' resource');
+  if (!visibleCount) html = '<tr><td colspan="8"><div class="empty">Nincs találat.</div></td></tr>';
+  els.marketTableBody.innerHTML = html;
+}
+function renderDraftSection(type, container, summaryEl, totalEl) {
+  var entries = getDraftEntries(type);
+  var total = getDraftTotal(type);
+  summaryEl.innerHTML = entries.length + ' tétel';
+  totalEl.innerHTML = money(total);
+  if (!entries.length) { container.innerHTML = '<div class="empty">Nincs tétel a tervezetben.</div>'; return; }
+  var html = '';
+  var i, res, qty, price;
+  for (i = 0; i < entries.length; i++) {
+    res = entries[i][0]; qty = entries[i][1];
+    price = type === 'import' ? state.market[res].currentBuy : state.market[res].currentExport;
+    html += '<div class="draft-row">' +
+      '<div class="c1"><strong>' + escapeHtml(state.market[res].label) + '</strong><br><span class="muted mono">' + escapeHtml(res) + '</span></div>' +
+      '<div class="c2">' + units(qty) + '</div>' +
+      '<div class="c3">' + money(price) + '</div>' +
+      '<div class="c4">' + money(price * qty) + '</div>' +
+      '<div class="c5"><button class="mini" data-draft-change="' + type + '" data-resource="' + escapeHtml(res) + '" data-delta="-1">-</button> <button class="mini" data-draft-remove="' + type + '" data-resource="' + escapeHtml(res) + '">X</button></div>' +
+      '<div class="clearfix"></div>' +
+      '</div>';
+  }
+  container.innerHTML = html;
+}
+function renderDrafts() {
+  renderDraftSection('import', els.importDraftList, els.importDraftSummary, els.importDraftTotal);
+  renderDraftSection('export', els.exportDraftList, els.exportDraftSummary, els.exportDraftTotal);
+  els.commitImportBtn.disabled = getDraftEntries('import').length === 0;
+  els.commitExportBtn.disabled = getDraftEntries('export').length === 0;
+}
+function renderActivity() {
+  if (!state.activity.length) { els.activityList.innerHTML = '<div class="empty">Nincs esemény.</div>'; return; }
+  var html = '', i, item, ts;
+  for (i = 0; i < state.activity.length; i++) {
+    item = state.activity[i];
+    ts = new Date(item.ts).toLocaleTimeString('hu-HU');
+    html += '<div class="activity-row"><span class="time">' + escapeHtml(ts) + '</span><span>' + escapeHtml(item.text) + '</span></div>';
+  }
+  els.activityList.innerHTML = html;
+}
+function renderWarehouse() {
+  var current = state.activeWarehouse;
+  els.warehouseHeadMeta.innerHTML = escapeHtml(current + ' | total unit: ' + units(getWarehouseTotalUnits(current)));
+  var list = getWarehouseList();
+  var cards = '', i, wh, total;
+  for (i = 0; i < list.length; i++) {
+    wh = list[i]; total = getWarehouseTotalUnits(wh);
+    cards += '<div class="warehouse-card' + (wh === current ? ' active' : '') + '" data-set-wh="' + escapeHtml(wh) + '"><div><strong>' + escapeHtml(wh) + '</strong></div><div class="muted">összes unit</div><div class="mono" style="font-size:18px; font-weight:bold;">' + units(total) + '</div></div>';
+  }
+  els.warehouseCards.innerHTML = cards;
+  var resources = getObjectKeys(state.inventory[current] || {});
+  resources.sort(function(a, b) { return String(state.market[a].label).localeCompare(String(state.market[b].label), 'hu'); });
+  var html = '';
+  if (!resources.length) html = '<tr><td colspan="4"><div class="empty">A kiválasztott WH üres.</div></td></tr>';
+  for (i = 0; i < resources.length; i++) {
+    var res = resources[i];
+    var stock = getInventoryAmount(current, res);
+    var reserved = getReservedAmount(current, res);
+    var free = stock - reserved;
+    html += '<tr><td><strong>' + escapeHtml(state.market[res].label) + '</strong><br><span class="muted mono">' + escapeHtml(res) + '</span></td><td class="num">' + units(stock) + '</td><td class="num">' + units(reserved) + '</td><td class="num' + (free === 0 ? ' danger-text' : '') + '">' + units(free) + '</td></tr>';
+  }
+  els.warehouseTableBody.innerHTML = html;
+  els.jsonPreview.innerHTML = escapeHtml(JSON.stringify(state.inventory, null, 2));
+}
+function renderOrders() {
+  els.ordersHeadMeta.innerHTML = state.orders.length + ' aktív order';
+  if (!state.orders.length) {
+    els.ordersList.innerHTML = '<div class="empty">Nincs aktív order.</div>';
+    els.selectedOrderMeta.innerHTML = 'Nincs kijelölve';
+    els.orderDetailPane.innerHTML = '<div class="empty">Válassz ordert a listából.</div>';
+    return;
+  }
+  var found = false, i, order, html = '';
+  for (i = 0; i < state.orders.length; i++) if (state.orders[i].id === state.selectedOrderId) found = true;
+  if (!found) state.selectedOrderId = state.orders[0].id;
+  for (i = 0; i < state.orders.length; i++) {
+    order = state.orders[i];
+    html += '<div class="order-item' + (order.id === state.selectedOrderId ? ' active' : '') + '" data-order-select="' + escapeHtml(order.id) + '">' +
+      '<div style="overflow:hidden;"><strong>' + escapeHtml(order.id) + '</strong><span style="float:right;"><span class="chip ' + escapeHtml(order.type) + '">' + escapeHtml(order.type) + '</span></span></div>' +
+      '<div style="margin-top:6px;"><span class="mono">' + escapeHtml(order.wh) + '</span> <span>' + getObjectKeys(order.lines).length + ' tétel</span></div>' +
+      '<div class="mono" style="margin-top:6px;">' + money(order.total) + '</div>' +
+      '</div>';
+  }
+  els.ordersList.innerHTML = html;
+  order = null;
+  for (i = 0; i < state.orders.length; i++) if (state.orders[i].id === state.selectedOrderId) order = state.orders[i];
+  if (!order) {
+    els.selectedOrderMeta.innerHTML = 'Nincs kijelölve';
+    els.orderDetailPane.innerHTML = '<div class="empty">Válassz ordert a listából.</div>';
+    return;
+  }
+  els.selectedOrderMeta.innerHTML = escapeHtml(order.id + ' | ' + String(order.type).toUpperCase());
+  var created = new Date(order.createdAt).toLocaleString('hu-HU');
+  var actionLabel = order.type === 'export' ? 'Felrakodás kész / Hajó indítás' : 'Betárolás lezárása';
+  var actionClass = order.type === 'export' ? 'danger' : 'success';
+  var warning = order.type === 'export' ? '<div class="warning-box">Ez végleges művelet. A hajó eltűnik és az order visszavonhatatlanul törlődik.</div>' : '<div class="success-box">Betároláskor az áru bekerül a WH készletébe, az import order eltűnik az aktív listából.</div>';
+  html = '';
+  html += '<div class="detail-box"><div class="detail-k">Order ID</div><div class="detail-v mono">' + escapeHtml(order.id) + '</div></div>';
+  html += '<div class="detail-box"><div class="detail-k">Típus</div><div class="detail-v"><span class="chip ' + escapeHtml(order.type) + '">' + escapeHtml(order.type) + '</span></div></div>';
+  html += '<div class="detail-box"><div class="detail-k">Warehouse</div><div class="detail-v mono">' + escapeHtml(order.wh) + '</div></div>';
+  html += '<div class="detail-box"><div class="detail-k">Összérték</div><div class="detail-v">' + money(order.total) + '</div></div>';
+  html += '<div class="detail-box"><div class="detail-k">Létrehozva</div><div class="detail-v">' + escapeHtml(created) + '</div></div>';
+  html += '<div class="detail-box"><div class="detail-k">Tételek száma</div><div class="detail-v">' + getObjectKeys(order.lines).length + '</div></div>';
+  html += '<div class="clearfix"></div>';
+  html += '<table><thead><tr><th>Resource</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Line Total</th></tr></thead><tbody>';
+  forEachOwn(order.lines, function(res, qty) {
+    var unit = numberOrZero((order.linePrices || {})[res]);
+    if (!unit) unit = order.type === 'import' ? state.market[res].currentBuy : state.market[res].currentExport;
+    html += '<tr><td><strong>' + escapeHtml(state.market[res].label) + '</strong><br><span class="muted mono">' + escapeHtml(res) + '</span></td><td class="num">' + units(qty) + '</td><td class="num">' + money(unit) + '</td><td class="num">' + money(unit * qty) + '</td></tr>';
+  });
+  html += '</tbody></table>' + warning + '<div style="text-align:right; margin-top:12px;"><button class="' + actionClass + '" data-complete-order="' + escapeHtml(order.id) + '">' + escapeHtml(actionLabel) + '</button></div>';
+  els.orderDetailPane.innerHTML = html;
+}
+function renderMessages() {
+  els.messagesHeadMeta.innerHTML = state.messages.length + ' üzenet | olvasatlan: ' + getUnreadMessageCount();
+  if (!state.messages.length) {
+    els.messagesList.innerHTML = '<div class="empty">Nincs beérkező üzenet.</div>';
+    els.selectedMessageMeta.innerHTML = 'Nincs kijelölve';
+    els.messageDetailPane.innerHTML = '<div class="empty">Nincs megjeleníthető üzenet.</div>';
+    return;
+  }
+  var found = false, i, message, html = '';
+  for (i = 0; i < state.messages.length; i++) if (state.messages[i].id === state.selectedMessageId) found = true;
+  if (!found) state.selectedMessageId = state.messages[0].id;
+  for (i = 0; i < state.messages.length; i++) {
+    message = state.messages[i];
+    var created = new Date(message.createdAt).toLocaleString('hu-HU');
+    var chipClass = message.type === 'export' ? 'export' : (message.type === 'import' ? 'import' : '');
+    var bodyPreview = String(message.body || '');
+    if (bodyPreview.length > 96) bodyPreview = bodyPreview.slice(0, 96) + '…';
+    html += '<div class="message-item' + (message.id === state.selectedMessageId ? ' active' : '') + (message.read ? '' : ' unread') + '" data-message-select="' + escapeHtml(message.id) + '">' +
+      '<div style="overflow:hidden;"><strong>' + escapeHtml(message.title) + '</strong><span style="float:right;" class="mono muted">' + escapeHtml(created) + '</span></div>' +
+      '<div style="margin-top:6px;"><span class="chip ' + chipClass + '">' + escapeHtml(message.type) + '</span><span class="mono">' + escapeHtml(message.orderId || 'SYSTEM') + '</span>' + (message.read ? ' <span class="muted">olvasott</span>' : ' <span class="ok">új</span>') + '</div>' +
+      '<div class="muted" style="margin-top:6px;">' + escapeHtml(bodyPreview) + '</div>' +
+      '</div>';
+  }
+  els.messagesList.innerHTML = html;
+  message = null;
+  for (i = 0; i < state.messages.length; i++) if (state.messages[i].id === state.selectedMessageId) message = state.messages[i];
+  if (!message) {
+    els.selectedMessageMeta.innerHTML = 'Nincs kijelölve';
+    els.messageDetailPane.innerHTML = '<div class="empty">Nincs megjeleníthető üzenet.</div>';
+    return;
+  }
+  els.selectedMessageMeta.innerHTML = escapeHtml(message.id + ' | ' + (message.orderId || 'SYSTEM'));
+  var relatedOrder = null;
+  for (i = 0; i < state.orders.length; i++) if (state.orders[i].id === message.orderId) relatedOrder = state.orders[i];
+  var chip = message.type === 'export' ? 'export' : (message.type === 'import' ? 'import' : '');
+  html = '';
+  html += '<div class="detail-box"><div class="detail-k">Üzenet ID</div><div class="detail-v mono">' + escapeHtml(message.id) + '</div></div>';
+  html += '<div class="detail-box"><div class="detail-k">Order ID</div><div class="detail-v mono">' + escapeHtml(message.orderId || 'SYSTEM') + '</div></div>';
+  html += '<div class="detail-box"><div class="detail-k">Típus</div><div class="detail-v"><span class="chip ' + chip + '">' + escapeHtml(message.type) + '</span></div></div>';
+  html += '<div class="detail-box"><div class="detail-k">Idő</div><div class="detail-v">' + escapeHtml(new Date(message.createdAt).toLocaleString('hu-HU')) + '</div></div>';
+  html += '<div class="clearfix"></div>';
+  html += '<div class="warning-box" style="background:#eef4ff; border-color:#8faedc; color:#183b70;">' + escapeHtml(message.body || '') + '</div>';
+  html += '<div style="text-align:right; margin-top:12px;">';
+  if (relatedOrder) html += '<button class="primary" data-message-open-order="' + escapeHtml(relatedOrder.id) + '">Kapcsolódó order megnyitása</button> ';
+  if (!message.read) html += '<button data-message-mark-read="' + escapeHtml(message.id) + '">Olvasottnak jelölés</button>';
+  html += '</div>';
+  els.messageDetailPane.innerHTML = html;
+}
+function render() {
+  renderTabs();
+  renderWarehouseSelect();
+  renderStats();
+  renderMerchant();
+  renderDrafts();
+  renderActivity();
+  renderWarehouse();
+  renderOrders();
+  renderMessages();
+}
+function findActionTarget(node) {
+  while (node && node !== document.body) {
+    if (node.getAttribute) {
+      if (node.getAttribute('data-action') || node.getAttribute('data-draft-change') || node.getAttribute('data-draft-remove') || node.getAttribute('data-order-select') || node.getAttribute('data-complete-order') || node.getAttribute('data-message-select') || node.getAttribute('data-message-mark-read') || node.getAttribute('data-message-open-order') || node.getAttribute('data-set-wh')) return node;
+    }
+    node = node.parentNode;
+  }
+  return null;
+}
+function findParentTag(node, tagName) {
+  tagName = String(tagName).toUpperCase();
+  while (node && node !== document.body) {
+    if (node.tagName && String(node.tagName).toUpperCase() === tagName) return node;
+    node = node.parentNode;
+  }
+  return null;
+}
+function bindEvents() {
+  var tabs = document.getElementsByClassName('tab');
+  var i;
+  for (i = 0; i < tabs.length; i++) {
+    tabs[i].onclick = function() {
+      var t, list = document.getElementsByClassName('tab');
+      for (t = 0; t < list.length; t++) removeClass(list[t], 'active');
+      addClass(this, 'active');
       renderTabs();
-      renderWarehouseSelect();
-      renderStats();
-      renderMerchant();
-      renderDrafts();
-      renderActivity();
-      renderWarehouse();
-      renderOrders();
+    };
+  }
+  els.warehouseSelect.onchange = function() { state.activeWarehouse = els.warehouseSelect.value; saveState('Aktív WH: ' + state.activeWarehouse); render(); };
+  els.resourceSearch.onkeyup = renderMerchant;
+  els.resourceSearch.oninput = renderMerchant;
+  els.syncSeedBtn.onclick = function() { if (!window.confirm('Demo állapot visszaállítása?')) return; state = normalizeState(SEED_STATE); saveState('Demo állapot visszaállítva.'); render(); };
+  els.clearDraftsBtn.onclick = clearDrafts;
+  els.commitImportBtn.onclick = finalizeImportOrder;
+  els.commitExportBtn.onclick = finalizeExportOrder;
+  document.body.onclick = function(event) {
+    event = event || window.event;
+    var btn = findActionTarget(event.target || event.srcElement);
+    if (!btn) return;
+    var action = btn.getAttribute('data-action');
+    if (action) {
+      var resource = btn.getAttribute('data-resource');
+      var tr = findParentTag(btn, 'TR');
+      var qty = 0;
+      if (tr) {
+        var inputs = tr.getElementsByTagName('input');
+        if (inputs.length) qty = numberOrZero(inputs[0].value);
+      }
+      if (action === 'add-import') addDraftLine('import', resource, qty);
+      if (action === 'add-export') addDraftLine('export', resource, qty);
+      return;
     }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
+    var draftChange = btn.getAttribute('data-draft-change');
+    if (draftChange) { changeDraftLine(draftChange, btn.getAttribute('data-resource'), numberOrZero(btn.getAttribute('data-delta'))); return; }
+    var draftRemove = btn.getAttribute('data-draft-remove');
+    if (draftRemove) { delete state.drafts[draftRemove][btn.getAttribute('data-resource')]; saveState('Tétel törölve a tervezetből.'); render(); return; }
+    var orderSelect = btn.getAttribute('data-order-select');
+    if (orderSelect) { state.selectedOrderId = orderSelect; saveState('Order kiválasztva: ' + state.selectedOrderId); render(); return; }
+    var completeAttr = btn.getAttribute('data-complete-order');
+    if (completeAttr) { completeOrder(completeAttr); return; }
+    var messageSelect = btn.getAttribute('data-message-select');
+    if (messageSelect) { state.selectedMessageId = messageSelect; markMessageRead(state.selectedMessageId, false); saveState('Üzenet megnyitva: ' + state.selectedMessageId); render(); return; }
+    var messageMarkRead = btn.getAttribute('data-message-mark-read');
+    if (messageMarkRead) { markMessageRead(messageMarkRead, true); return; }
+    var messageOpenOrder = btn.getAttribute('data-message-open-order');
+    if (messageOpenOrder) {
+      state.selectedOrderId = messageOpenOrder;
+      var tabs2 = document.getElementsByClassName('tab');
+      for (i = 0; i < tabs2.length; i++) removeClass(tabs2[i], 'active');
+      for (i = 0; i < tabs2.length; i++) if (tabs2[i].getAttribute('data-tab') === 'orders') addClass(tabs2[i], 'active');
+      saveState('Kapcsolódó order megnyitva: ' + state.selectedOrderId);
+      render();
+      return;
     }
-
-    function bindEvents() {
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          renderTabs();
-        });
-      });
-
-      els.warehouseSelect.addEventListener('change', () => {
-        state.activeWarehouse = els.warehouseSelect.value;
-        saveState('Aktív WH: ' + state.activeWarehouse);
-        render();
-      });
-
-      els.resourceSearch.addEventListener('input', renderMerchant);
-
-      els.syncSeedBtn.addEventListener('click', () => {
-        const ok = confirm('Demo állapot visszaállítása?');
-        if (!ok) return;
-        state = normalizeState(SEED_STATE);
-        saveState('Demo állapot visszaállítva.');
-        render();
-      });
-
-      els.clearDraftsBtn.addEventListener('click', clearDrafts);
-      els.commitImportBtn.addEventListener('click', finalizeImportOrder);
-      els.commitExportBtn.addEventListener('click', finalizeExportOrder);
-
-      document.body.addEventListener('click', event => {
-        const btn = event.target.closest('button, .order-item, .warehouse-card');
-        if (!btn) return;
-
-        if (btn.dataset.action) {
-          const resource = btn.dataset.resource;
-          const input = btn.closest('tr')?.querySelector('input[data-qty-resource]');
-          const qty =... (5 KB maradt)
+    var setWh = btn.getAttribute('data-set-wh');
+    if (setWh) { state.activeWarehouse = setWh; saveState('Aktív WH: ' + state.activeWarehouse); render(); return; }
+  };
+}
+function replaceInventory(inventory) {
+  var normalized = normalizeState({
+    brokerName: state.brokerName,
+    currency: state.currency,
+    cash: state.cash,
+    lockedCash: state.lockedCash,
+    expectedRevenue: state.expectedRevenue,
+    nextOrderId: state.nextOrderId,
+    selectedOrderId: state.selectedOrderId,
+    selectedMessageId: state.selectedMessageId,
+    inventory: inventory,
+    market: state.market,
+    drafts: state.drafts,
+    orders: state.orders,
+    messages: state.messages,
+    activity: state.activity,
+    activeWarehouse: state.activeWarehouse
+  });
+  state.inventory = normalized.inventory;
+  state.market = normalized.market;
+  if (!state.inventory[state.activeWarehouse]) {
+    var whs = getObjectKeys(state.inventory);
+    state.activeWarehouse = whs.length ? whs[0] : 'WHMAIN';
+    if (!state.inventory[state.activeWarehouse]) state.inventory[state.activeWarehouse] = {};
+  }
+  saveState('Inventory cserélve.');
+  render();
+}
+function setWarehouseInventory(wh, data) {
+  state.inventory[wh] = {};
+  forEachOwn(data || {}, function(res, qty) {
+    state.inventory[wh][res] = Math.max(0, numberOrZero(qty));
+    if (!state.market[res]) state.market[res] = defaultMarketEntry(res);
+  });
+  if (!state.activeWarehouse) state.activeWarehouse = wh;
+  saveState('WH inventory frissítve: ' + wh);
+  render();
+}
+function adjustInventory(wh, resource, delta) {
+  if (!state.inventory[wh]) state.inventory[wh] = {};
+  if (!state.market[resource]) state.market[resource] = defaultMarketEntry(resource);
+  state.inventory[wh][resource] = Math.max(0, getInventoryAmount(wh, resource) + numberOrZero(delta));
+  saveState('Inventory delta alkalmazva: ' + wh + ' / ' + resource);
+  render();
+}
+function boot() {
+  initEls();
+  loadState();
+  bindEvents();
+  render();
+  setStatus('Terminál készen áll.');
+}
+window.TerminalApp = {
+  getState: function() { return deepClone(state); },
+  loadState: function(nextState) { state = normalizeState(nextState); saveState('Külső állapot betöltve.'); render(); },
+  replaceInventory: function(inventory) { replaceInventory(inventory); },
+  setWarehouseInventory: function(wh, data) { setWarehouseInventory(wh, data); },
+  adjustInventory: function(wh, resource, delta) { adjustInventory(wh, resource, delta); },
+  setCash: function(value) { state.cash = Math.max(0, numberOrZero(value)); saveState('Cash frissítve.'); render(); },
+  createImportOrder: function(wh, lines) { state.activeWarehouse = wh || state.activeWarehouse; state.drafts.import = deepClone(lines || {}); finalizeImportOrder(); },
+  createExportOrder: function(wh, lines) { state.activeWarehouse = wh || state.activeWarehouse; state.drafts.export = deepClone(lines || {}); finalizeExportOrder(); },
+  completeOrder: function(orderId) { completeOrder(orderId); },
+  addMessage: function(payload) { return addMessage(payload || {}); },
+  markMessageRead: function(messageId) { markMessageRead(messageId, true); },
+  notifyOrderReady: function(orderId, body) {
+    var order = null, i;
+    for (i = 0; i < state.orders.length; i++) if (state.orders[i].id === orderId) order = state.orders[i];
+    var type = order ? order.type : 'system';
+    var title = order ? (order.id + ' fizikai visszajelzés') : 'Fizikai visszajelzés';
+    return addMessage({ orderId: orderId || 'SYSTEM', type: type, title: title, body: body || 'A raktár jelentése szerint az order fizikai oldalon teljesült, kézi lezárásra vár.' });
+  }
+};
+boot();
+</script>
+</body>
+</html>
