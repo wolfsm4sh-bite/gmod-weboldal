@@ -250,7 +250,6 @@ th { background:#d5d9de; text-align:left; }
 </div>
 <script>
 var STORAGE_KEY = 'southside-merchant-terminal-v2';
-var API_BASE = (typeof window !== 'undefined' && window.location.protocol !== 'file:') ? '' : '';
 var SEED_STATE = {
   brokerName: 'Southside Merchant Terminal',
   currency: '$',
@@ -474,25 +473,17 @@ function addActivity(text) {
 }
 function pushOrderToServer(order) {
   try {
-    fetch(API_BASE + '/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order)
-    }).then(function(r) {
-      if (r.ok) {
-        setStatus(order.id + ' szerverre mentve ✓');
-      } else {
-        setStatus('[HIBA] ' + order.id + ' szerverre küldés sikertelen (HTTP ' + r.status + ')');
-      }
-    }).catch(function(err) {
-      setStatus('[HIBA] ' + order.id + ' szerverre küldés sikertelen: ' + String(err));
-    });
+    if (typeof gmod !== 'undefined' && gmod.createOrder) {
+      gmod.createOrder(JSON.stringify(order));
+      setStatus(order.id + ' elmentve a szerverre ✓');
+    }
   } catch (e) {}
 }
 function removeOrderFromServer(orderId) {
   try {
-    fetch(API_BASE + '/api/orders/' + orderId, { method: 'DELETE' })
-      .catch(function() {});
+    if (typeof gmod !== 'undefined' && gmod.closeOrder) {
+      gmod.closeOrder(orderId);
+    }
   } catch (e) {}
 }
 function setStatus(text) { els.statusText.innerHTML = escapeHtml(text); }
