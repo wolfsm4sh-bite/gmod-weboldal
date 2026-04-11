@@ -250,6 +250,7 @@ th { background:#d5d9de; text-align:left; }
 </div>
 <script>
 var STORAGE_KEY = 'southside-merchant-terminal-v2';
+var API_BASE = (typeof window !== 'undefined' && window.location.protocol !== 'file:') ? '' : '';
 var SEED_STATE = {
   brokerName: 'Southside Merchant Terminal',
   currency: '$',
@@ -471,6 +472,29 @@ function addActivity(text) {
   state.activity.unshift({ text: text, ts: new Date().toISOString() });
   state.activity = state.activity.slice(0, 10);
 }
+function pushOrderToServer(order) {
+  try {
+    fetch(API_BASE + '/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order)
+    }).then(function(r) {
+      if (r.ok) {
+        setStatus(order.id + ' szerverre mentve ✓');
+      } else {
+        setStatus('[HIBA] ' + order.id + ' szerverre küldés sikertelen (HTTP ' + r.status + ')');
+      }
+    }).catch(function(err) {
+      setStatus('[HIBA] ' + order.id + ' szerverre küldés sikertelen: ' + String(err));
+    });
+  } catch (e) {}
+}
+function removeOrderFromServer(orderId) {
+  try {
+    fetch(API_BASE + '/api/orders/' + orderId, { method: 'DELETE' })
+      .catch(function() {});
+  } catch (e) {}
+}
 function setStatus(text) { els.statusText.innerHTML = escapeHtml(text); }
 function getWarehouseList() { return getObjectKeys(state.inventory); }
 function getResourceIds() {
@@ -664,6 +688,7 @@ function finalizeImportOrder() {
   shiftMarketPrices(order, 'create');
   addActivity(order.id + ' import order létrejött.');
   createOrderMessage(order);
+  pushOrderToServer(order);
   saveState('Import order létrehozva.');
   render();
 }
@@ -693,6 +718,7 @@ function finalizeExportOrder() {
   shiftMarketPrices(order, 'create');
   addActivity(order.id + ' export order létrejött.');
   createOrderMessage(order);
+  pushOrderToServer(order);
   saveState('Export order létrehozva.');
   render();
 }
@@ -743,6 +769,7 @@ function completeOrder(orderId) {
     addActivity(order.id + ' import lezárva, áru betárolva.');
   }
   state.orders.splice(orderIndex, 1);
+  removeOrderFromServer(orderId);
   if (state.selectedOrderId === orderId) state.selectedOrderId = state.orders.length ? state.orders[0].id : null;
   shiftMarketPrices(order, 'complete');
   saveState(order.id + ' lezárva és törölve az aktív listából.');
